@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Rhythm-Board - A precision rhythm tap game where timing is everything. Tap to the beat, build your combo, and master your rhythm skills.">
+    <meta name="keywords" content="rhythm game, tap game, music game, browser game, rhythm-board">
+    <meta name="author" content="Rhythm-Board Team">
+    <meta property="og:title" content="Rhythm-Board | Tap to the Beat">
+    <meta property="og:description" content="Test your timing in this addictive rhythm tap game. Play now for free!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://YOUR_USERNAME.github.io/rhythm-board/">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Rhythm-Board | Precision Rhythm Tap Game</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Animated Particles Container -->
+<div class="particles" id="particles"></div>
+
+<div class="container">
+    <!-- Navigation -->
+    <nav class="navbar fade-in-up">
+        <div class="logo">
+            RHYTHM<span>-BOARD</span>
+        </div>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#features">Features</a>
+            <a href="#howto">How to Play</a>
+            <a href="#leaderboard">Leaderboard</a>
+            <a href="game.html" class="play-btn-nav">🎮 Play Now</a>
+        </div>
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero fade-in-up">
+        <div class="hero-content">
+            <div class="hero-badge">
+                ⚡ NEW RHYTHM EXPERIENCE
+            </div>
+            <h1>
+                Tap. Feel.<br>
+                Master the Beat
+            </h1>
+            <p>
+                Experience the ultimate rhythm tap challenge. Test your timing, 
+                build massive combos, and compete with players worldwide. 
+                Precision meets music in this addictive arcade experience.
+            </p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">10+</div>
+                    <div class="stat-label">Songs</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">50ms</div>
+                    <div class="stat-label">Precision</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Players</div>
+                </div>
+            </div>
+            <div class="cta-buttons">
+                <a href="game.html" class="btn-primary">🎯 Start Playing</a>
+                <a href="#features" class="btn-secondary">Learn More</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="game-preview">
+                <canvas id="previewCanvas" class="preview-canvas" width="400" height="300"></canvas>
+                <div class="tap-demo">
+                    <div class="tap-demo-btn" data-demo-lane="0">←</div>
+                    <div class="tap-demo-btn" data-demo-lane="1">↓</div>
+                    <div class="tap-demo-btn" data-demo-lane="2">↑</div>
+                    <div class="tap-demo-btn" data-demo-lane="3">→</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <h2 class="section-title">Why Play Rhythm-Board?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Precision Timing</h3>
+                <p>Millisecond-accurate judgment system with Perfect, Great, Good, and Miss ratings.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔥</div>
+                <h3>Combo System</h3>
+                <p>Build massive combos and multiply your score. Every 10 hits increases your multiplier!</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Global Leaderboards</h3>
+                <p>Compete with players worldwide and climb the ranks to become the rhythm master.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Cross-Platform</h3>
+                <p>Play on desktop, tablet, or mobile. Keyboard and touch controls fully supported.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3>Diverse Soundtrack</h3>
+                <p>Multiple songs across various genres. More tracks added regularly.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Stats Tracking</h3>
+                <p>Track your accuracy, best combos, and improvement over time.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Play -->
+    <section id="howto" class="how-to-play">
+        <div class="how-to-play-inner">
+            <h2 class="section-title">How to Play</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Sign Up</h4>
+                    <p>Create your free account to save progress and compete globally</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Choose a Song</h4>
+                    <p>Select from our growing library of rhythm tracks</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>Tap to the Beat</h4>
+                    <p>Hit the buttons in time with the rhythm indicators</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h4>Master Your Combo</h4>
+                    <p>Chain perfect hits to maximize your score multiplier</p>
+                </div>
+            </div>
+            <div class="controls-info">
+                <div class="control-badge">🎮 Keyboard: ← ↓ ↑ →</div>
+                <div class="control-badge">🎮 Touch: Tap the buttons</div>
+                <div class="control-badge">🎮 Alternate: A S D W</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Leaderboard Preview -->
+    <section id="leaderboard" class="leaderboard-preview">
+        <h2 class="section-title">Top Players</h2>
+        <div class="leaderboard-card">
+            <div class="leaderboard-header">
+                <span>Rank</span>
+                <span>Player</span>
+                <span>High Score</span>
+            </div>
+            <div class="leaderboard-body" id="leaderboardBody">
+                <div class="leaderboard-entry">
+                    <span class="rank">#1</span>
+                    <span>🎵 RhythmMaster</span>
+                    <span>12,450</span>
+                </div>
+                <div class="leaderboard-entry">
+                    <span class="rank">#2</span>
+                    <span>⚡ TapKing</span>
+                    <span>11,890</span>
+                </div>
+                <div class="leaderboard-entry">
+                    <span class="rank">#3</span>
+                    <span>🔥 BeatWizard</span>
+                    <span>10,920</span>
+                </div>
+                <div class="leaderboard-entry">
+                    <span class="rank">#4</span>
+                    <span>💎 PerfectTapper</span>
+                    <span>9,850</span>
+                </div>
+                <div class="leaderboard-entry">
+                    <span class="rank">#5</span>
+                    <span>🎶 ComboKing</span>
+                    <span>9,120</span>
+                </div>
+            </div>
+        </div>
+        <div class="leaderboard-cta">
+            <p>⭐ Play now to see your name on the real leaderboard!</p>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <h2>Ready to Test Your Rhythm?</h2>
+        <p>Join thousands of players and discover your timing precision.</p>
+        <a href="game.html" class="btn-primary cta-button">🎮 Play Rhythm-Board Now</a>
+        <div class="cta-features">
+            <span>✓ Free to play</span>
+            <span>✓ No download required</span>
+            <span>✓ Works on all devices</span>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Rhythm-Board</h4>
+                <p>Precision rhythm tap game<br>Master your timing</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="#home">Home</a>
+                <a href="#features">Features</a>
+                <a href="#howto">How to Play</a>
+                <a href="#leaderboard">Leaderboard</a>
+            </div>
+            <div class="footer-section">
+                <h4>Community</h4>
+                <a href="#">Discord</a>
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">Feedback</a>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <a href="#">Terms of Service</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2024 Rhythm-Board. All rights reserved. Tap to the beat!
+        </div>
+    </footer>
+</div>
+
+<!-- External JavaScript -->
+<script src="js/main.js"></script>
+</body>
+</html>
