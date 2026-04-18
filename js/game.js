@@ -20,8 +20,15 @@ const comboSpan = document.getElementById('combo');
 const highScoreSpan = document.getElementById('high-score');
 const judgmentDiv = document.getElementById('judgment');
 const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restart-btn');
+
+// Get canvas context
+let ctx = null;
+if (canvas) {
+    ctx = canvas.getContext('2d');
+    canvas.width = 800;
+    canvas.height = 400;
+}
 
 // ============================================
 // Game Variables
@@ -34,7 +41,6 @@ let currentUserId = null;
 let gameActive = true;
 let currentBeat = 0;
 let lastTapTime = 0;
-let animationId = null;
 
 // Rhythm parameters
 const BPM = 120;
@@ -47,89 +53,200 @@ const JUDGMENT_WINDOWS = {
 
 let beatInterval = null;
 
-// Canvas dimensions
-canvas.width = 800;
-canvas.height = 400;
-
 // ============================================
 // Authentication Functions
 // ============================================
 
-// Tab switching
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        document.getElementById(`${tab}-form`).classList.add('active');
+// Wait for DOM to be fully loaded before attaching event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded');
+    
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            const formToShow = document.getElementById(`${tab}-form`);
+            if (formToShow) formToShow.classList.add('active');
+        });
+    });
+
+    // Login form
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('auth-error');
+            
+            console.log('Attempting login for:', email);
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('Login successful!', userCredential.user.email);
+                errorDiv.textContent = '';
+                errorDiv.style.color = '#00ff00';
+                errorDiv.textContent = 'Login successful! Redirecting...';
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+                
+                // Clear success message after 2 seconds
+                setTimeout(() => {
+                    if (errorDiv) errorDiv.textContent = '';
+                }, 2000);
+            } catch (error) {
+                console.error('Login error:', error.code, error.message);
+                errorDiv.style.color = '#ff4444';
+                let errorMessage = 'Login failed: ';
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage += 'Invalid email format.';
+                        break;
+                    case 'auth/user-not-found':
+                        errorMessage += 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage += 'Incorrect password.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                errorDiv.textContent = errorMessage;
+            }
+        });
+    }
+
+    // Signup form
+    const signupForm = document.getElementById('signup-form');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const errorDiv = document.getElementById('auth-error');
+            
+            console.log('Attempting signup for:', email);
+            
+            // Validate password strength
+            if (password.length < 6) {
+                errorDiv.style.color = '#ff4444';
+                errorDiv.textContent = 'Password must be at least 6 characters long.';
+                return;
+            }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                console.log('Signup successful!', userCredential.user.email);
+                
+                // Create user document in Firestore
+                await setDoc(doc(db, 'users', userCredential.user.uid), {
+                    email: email,
+                    highScore: 0,
+                    createdAt: new Date().toISOString()
+                });
+                
+                errorDiv.style.color = '#00ff00';
+                errorDiv.textContent = 'Account created successfully! Redirecting...';
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-password').value = '';
+                
+                setTimeout(() => {
+                    if (errorDiv) errorDiv.textContent = '';
+                }, 2000);
+            } catch (error) {
+                console.error('Signup error:', error.code, error.message);
+                errorDiv.style.color = '#ff4444';
+                let errorMessage = 'Signup failed: ';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage += 'Email already registered. Please login instead.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage += 'Invalid email format.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage += 'Password is too weak. Use at least 6 characters.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                errorDiv.textContent = errorMessage;
+            }
+        });
+    }
+
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                console.log('Logout successful');
+                resetGame();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+    }
+
+    // Restart button
+    if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+        });
+    }
+
+    // Tap buttons
+    const tapBtns = document.querySelectorAll('.tap-btn');
+    tapBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lane = parseInt(btn.dataset.lane);
+            handleTap(lane);
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => { btn.style.transform = ''; }, 100);
+        });
+        
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const lane = parseInt(btn.dataset.lane);
+            handleTap(lane);
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => { btn.style.transform = ''; }, 100);
+        });
     });
 });
 
-// Login
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const errorDiv = document.getElementById('auth-error');
-    
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        errorDiv.textContent = '';
-        document.getElementById('login-email').value = '';
-        document.getElementById('login-password').value = '';
-    } catch (error) {
-        errorDiv.textContent = 'Login failed: ' + error.message;
-    }
-});
+// ============================================
+// Auth State Listener
+// ============================================
 
-// Signup
-document.getElementById('signup-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('signup-email').value;
-    const password = document.getElementById('signup-password').value;
-    const errorDiv = document.getElementById('auth-error');
-    
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-            email: email,
-            highScore: 0,
-            createdAt: new Date().toISOString()
-        });
-        errorDiv.textContent = '';
-        document.getElementById('signup-email').value = '';
-        document.getElementById('signup-password').value = '';
-    } catch (error) {
-        errorDiv.textContent = 'Signup failed: ' + error.message;
-    }
-});
-
-// Logout
-document.getElementById('logout-btn').addEventListener('click', async () => {
-    await signOut(auth);
-    resetGame();
-});
-
-// Auth state listener
 onAuthStateChanged(auth, (user) => {
+    console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
+    
     if (user) {
         currentUserId = user.uid;
-        userEmailSpan.textContent = user.email;
-        authSection.style.display = 'none';
-        gameSection.style.display = 'block';
+        if (userEmailSpan) userEmailSpan.textContent = user.email;
+        if (authSection) authSection.style.display = 'none';
+        if (gameSection) gameSection.style.display = 'block';
         loadUserHighScore();
         startGame();
     } else {
         currentUserId = null;
-        authSection.style.display = 'block';
-        gameSection.style.display = 'none';
+        if (authSection) authSection.style.display = 'block';
+        if (gameSection) gameSection.style.display = 'none';
         if (beatInterval) clearInterval(beatInterval);
-        if (animationId) cancelAnimationFrame(animationId);
+        resetGame();
     }
 });
 
-// Load user's high score
+// ============================================
+// Database Functions
+// ============================================
+
 async function loadUserHighScore() {
     if (!currentUserId) return;
     
@@ -137,20 +254,20 @@ async function loadUserHighScore() {
         const userDoc = await getDoc(doc(db, 'users', currentUserId));
         if (userDoc.exists()) {
             highScore = userDoc.data().highScore || 0;
-            highScoreSpan.textContent = highScore;
+            if (highScoreSpan) highScoreSpan.textContent = highScore;
+            console.log('Loaded high score:', highScore);
         }
     } catch (error) {
         console.error('Error loading high score:', error);
     }
 }
 
-// Save high score
 async function saveHighScore() {
     if (!currentUserId) return;
     
     if (score > highScore) {
         highScore = score;
-        highScoreSpan.textContent = highScore;
+        if (highScoreSpan) highScoreSpan.textContent = highScore;
         
         try {
             await updateDoc(doc(db, 'users', currentUserId), {
@@ -165,6 +282,8 @@ async function saveHighScore() {
                 score: score,
                 date: new Date().toISOString()
             });
+            
+            console.log('High score saved:', highScore);
         } catch (error) {
             console.error('Error saving high score:', error);
         }
@@ -180,9 +299,9 @@ function startGame() {
     score = 0;
     combo = 0;
     currentBeat = 0;
-    scoreSpan.textContent = score;
-    comboSpan.textContent = combo;
-    judgmentDiv.textContent = '';
+    if (scoreSpan) scoreSpan.textContent = score;
+    if (comboSpan) comboSpan.textContent = combo;
+    if (judgmentDiv) judgmentDiv.textContent = '';
     
     if (beatInterval) clearInterval(beatInterval);
     
@@ -194,6 +313,7 @@ function startGame() {
     }, BEAT_INTERVAL * 1000);
     
     drawGame();
+    console.log('Game started');
 }
 
 function resetGame() {
@@ -201,16 +321,14 @@ function resetGame() {
     score = 0;
     combo = 0;
     currentBeat = 0;
-    scoreSpan.textContent = score;
-    comboSpan.textContent = combo;
-    judgmentDiv.textContent = '';
+    if (scoreSpan) scoreSpan.textContent = score;
+    if (comboSpan) comboSpan.textContent = combo;
+    if (judgmentDiv) judgmentDiv.textContent = '';
     drawGame();
-    startGame();
+    if (gameSection && gameSection.style.display === 'block') {
+        startGame();
+    }
 }
-
-restartBtn.addEventListener('click', () => {
-    resetGame();
-});
 
 function handleTap(lane) {
     if (!gameActive) return;
@@ -239,8 +357,8 @@ function handleTap(lane) {
         
         score += finalPoints;
         combo++;
-        scoreSpan.textContent = score;
-        comboSpan.textContent = combo;
+        if (scoreSpan) scoreSpan.textContent = score;
+        if (comboSpan) comboSpan.textContent = combo;
         
         showJudgment(judgment, multiplier);
         
@@ -249,7 +367,7 @@ function handleTap(lane) {
         }
     } else {
         combo = 0;
-        comboSpan.textContent = combo;
+        if (comboSpan) comboSpan.textContent = combo;
         showJudgment('miss', 0);
     }
     
@@ -258,6 +376,8 @@ function handleTap(lane) {
 }
 
 function showJudgment(judgment, multiplier) {
+    if (!judgmentDiv) return;
+    
     judgmentDiv.textContent = judgment.toUpperCase();
     judgmentDiv.className = `judgment ${judgment}`;
     
@@ -266,8 +386,8 @@ function showJudgment(judgment, multiplier) {
     }
     
     setTimeout(() => {
-        if (judgmentDiv.textContent === judgment.toUpperCase() || 
-            judgmentDiv.textContent.includes(judgment.toUpperCase())) {
+        if (judgmentDiv && (judgmentDiv.textContent === judgment.toUpperCase() || 
+            judgmentDiv.textContent.includes(judgment.toUpperCase()))) {
             judgmentDiv.textContent = '';
             judgmentDiv.className = 'judgment';
         }
@@ -275,7 +395,7 @@ function showJudgment(judgment, multiplier) {
 }
 
 function drawGame() {
-    if (!ctx) return;
+    if (!ctx || !canvas) return;
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -316,30 +436,6 @@ function drawGame() {
     ctx.stroke();
 }
 
-// ============================================
-// Input Handlers
-// ============================================
-
-document.querySelectorAll('.tap-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const lane = parseInt(btn.dataset.lane);
-        handleTap(lane);
-        
-        // Visual feedback
-        btn.style.transform = 'scale(0.9)';
-        setTimeout(() => { btn.style.transform = ''; }, 100);
-    });
-    
-    // Touch feedback for mobile
-    btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const lane = parseInt(btn.dataset.lane);
-        handleTap(lane);
-        btn.style.transform = 'scale(0.9)';
-        setTimeout(() => { btn.style.transform = ''; }, 100);
-    });
-});
-
 // Keyboard support
 document.addEventListener('keydown', (e) => {
     const keyMap = {
@@ -347,18 +443,18 @@ document.addEventListener('keydown', (e) => {
         'a': 0, 's': 1, 'w': 2, 'd': 3
     };
     
-    if (keyMap[e.key] !== undefined) {
+    if (keyMap[e.key] !== undefined && gameSection && gameSection.style.display === 'block') {
         e.preventDefault();
         handleTap(keyMap[e.key]);
         
-        // Visual feedback for keyboard
         const btn = document.querySelector(`.tap-btn[data-lane="${keyMap[e.key]}"]`);
         if (btn) {
             btn.style.transform = 'scale(0.9)';
-            setTimeout(() => { btn.style.transform = ''; }, 100);
+            setTimeout(() => { if (btn) btn.style.transform = ''; }, 100);
         }
     }
 });
 
 // Initial draw
 drawGame();
+console.log('Game.js loaded successfully');
