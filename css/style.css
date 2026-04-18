@@ -636,7 +636,6 @@ body {
     animation: fadeInUp 0.8s ease forwards;
 }
 
-/* Scroll Reveal Classes */
 .feature-card, .step, .leaderboard-card {
     opacity: 0;
     transform: translateY(30px);
@@ -716,10 +715,6 @@ body {
     
     .navbar {
         flex-direction: row;
-    }
-    
-    .nav-links {
-        justify-content: center;
     }
     
     .hero {

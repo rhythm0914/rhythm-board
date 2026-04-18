@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rhythm-Board | Play Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #3820ab 0%, #d600d6 50%, #00dfff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-wrapper {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Auth Section */
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-card {
+            text-align: center;
+        }
+
+        .auth-card h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3820ab, #d600d6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 30px 0 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .tab-btn.active {
+            background: #d600d6;
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form.active {
+            display: flex;
+        }
+
+        .auth-form input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: #d600d6;
+        }
+
+        .auth-form button {
+            padding: 12px;
+            background: #d600d6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+
+        .auth-form button:hover {
+            background: #3820ab;
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        /* Game Section */
+        .game-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-email {
+            color: #3820ab;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            padding: 5px 15px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #cc0000;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .score-board div {
+            background: linear-gradient(135deg, #3820ab, #d600d6);
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+        }
+
+        .game-canvas {
+            display: block;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 10px;
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .tap-area {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .tap-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #3820ab, #d600d6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.1s;
+            font-weight: bold;
+        }
+
+        .tap-btn:active {
+            transform: scale(0.95);
+            background: #00dfff;
+            color: #3820ab;
+        }
+
+        .judgment {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 10px;
+            height: 70px;
+        }
+
+        .judgment.perfect { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .judgment.great { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        .judgment.good { color: #87ceeb; text-shadow: 0 0 10px #87ceeb; }
+        .judgment.miss { color: #ff4444; text-shadow: 0 0 10px #ff4444; }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .game-btn {
+            padding: 8px 20px;
+            background: #d600d6;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .game-btn:hover {
+            background: #3820ab;
+        }
+
+        @media (max-width: 600px) {
+            .tap-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .score-board {
+                font-size: 0.9rem;
+                gap: 10px;
+            }
+            
+            .game-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .judgment {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .tap-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <!-- Auth Section -->
+    <div id="auth-section" class="auth-section">
+        <div class="auth-card">
+            <h1>🎵 Rhythm-Board</h1>
+            <p>Tap to the beat. Master your timing.</p>
+            
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Login</button>
+                <button class="tab-btn" data-tab="signup">Sign Up</button>
+            </div>
+            
+            <form id="login-form" class="auth-form active">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            
+            <form id="signup-form" class="auth-form">
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="password" id="signup-password" placeholder="Password" required>
+                <button type="submit">Create Account</button>
+            </form>
+            
+            <div id="auth-error" class="error-message"></div>
+        </div>
+    </div>
+    
+    <!-- Game Section -->
+    <div id="game-section" class="game-section" style="display: none;">
+        <div class="game-header">
+            <div class="user-info">
+                <span class="user-email" id="user-email"></span>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+            <div class="score-board">
+                <div>Score: <span id="score">0</span></div>
+                <div>Combo: <span id="combo">0</span>x</div>
+                <div>Best: <span id="high-score">0</span></div>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas" class="game-canvas" width="800" height="400"></canvas>
+        
+        <div class="tap-area">
+            <button class="tap-btn" data-lane="0">←</button>
+            <button class="tap-btn" data-lane="1">↓</button>
+            <button class="tap-btn" data-lane="2">↑</button>
+            <button class="tap-btn" data-lane="3">→</button>
+        </div>
+        
+        <div class="game-controls">
+            <button id="restart-btn" class="game-btn">🔄 Restart</button>
+        </div>
+        
+        <div id="judgment" class="judgment"></div>
+    </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module" src="js/firebase-config.js"></script>
+<script type="module" src="js/game.js"></script>
+</body>
+</html>
