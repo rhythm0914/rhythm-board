@@ -843,12 +843,14 @@ body {
     animation: fadeInUp 0.8s ease forwards;
 }
 
+/* CHANGE: Added .revealed to the base state OR set default opacity to 1 */
 .feature-card, .step, .leaderboard-card {
-    opacity: 0;
-    transform: translateY(30px);
+    opacity: 1; /* Changed from 0 to 1 so text is visible immediately */
+    transform: translateY(0); /* Changed from 30px to 0 */
     transition: all 0.6s ease;
 }
 
+/* This class will still work if your JS adds it for a 'pop' effect */
 .feature-card.revealed, .step.revealed, .leaderboard-card.revealed {
     opacity: 1;
     transform: translateY(0);
