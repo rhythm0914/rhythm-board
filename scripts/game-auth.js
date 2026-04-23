@@ -1,13 +1,22 @@
-// ============================================
-// GAME AUTHENTICATION WITH LOCALSTORAGE
-// Integrated with leaderboard-system.js
-// ============================================
+// Import Firebase modules
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
 
-// Import the leaderboard system (loaded from global)
-// The leaderboard-system.js should be loaded before this
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBh6zf8BxTnJx4AOKPCm-VvgZplVhn9LRI",
+    authDomain: "rhythm-board.firebaseapp.com",
+    projectId: "rhythm-board",
+    storageBucket: "rhythm-board.firebasestorage.app",
+    messagingSenderId: "987190217216",
+    appId: "1:987190217216:web:ea39da422b290dbf3626e5"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 let currentUser = null;
-let gameScoreSaved = false;
 
 // DOM Elements
 const authModal = document.getElementById('authModal');
@@ -22,22 +31,6 @@ const guestGameBtn = document.getElementById('guestGameBtn');
 const authTabs = document.querySelectorAll('.auth-tab');
 const authForms = document.querySelectorAll('.auth-form');
 
-// Wait for leaderboard system to be ready
-function waitForLeaderboard() {
-    return new Promise((resolve) => {
-        if (window.leaderboardSystem) {
-            resolve(window.leaderboardSystem);
-        } else {
-            const checkInterval = setInterval(() => {
-                if (window.leaderboardSystem) {
-                    clearInterval(checkInterval);
-                    resolve(window.leaderboardSystem);
-                }
-            }, 100);
-        }
-    });
-}
-
 // Show auth modal
 function showAuthModal() {
     if (authModal) authModal.classList.add('active');
@@ -51,26 +44,6 @@ function hideAuthModal() {
     if (signupError) signupError.textContent = '';
     if (loginForm) loginForm.reset();
     if (signupForm) signupForm.reset();
-}
-
-// Update UI based on auth state
-function updateAuthUI() {
-    if (currentUser) {
-        if (userBar) {
-            userBar.style.display = 'flex';
-            userEmailSpan.textContent = currentUser.username || currentUser.email.split('@')[0];
-        }
-        if (showAuthBtn) showAuthBtn.style.display = 'none';
-        
-        const startBtn = document.querySelector('.btn--start');
-        if (startBtn) startBtn.style.pointerEvents = 'auto';
-    } else {
-        if (userBar) userBar.style.display = 'none';
-        if (showAuthBtn) showAuthBtn.style.display = 'block';
-        
-        const startBtn = document.querySelector('.btn--start');
-        if (startBtn) startBtn.style.pointerEvents = 'auto';
-    }
 }
 
 // Tab switching
@@ -96,11 +69,9 @@ if (loginForm) {
         const errorDiv = document.getElementById('loginError');
         
         try {
-            const user = await window.leaderboardSystem.login(email, password);
-            currentUser = user;
+            await signInWithEmailAndPassword(auth, email, password);
             errorDiv.textContent = '';
             hideAuthModal();
-            updateAuthUI();
         } catch (error) {
             errorDiv.textContent = 'Login failed: ' + error.message;
         }
@@ -121,11 +92,9 @@ if (signupForm) {
         }
         
         try {
-            const user = await window.leaderboardSystem.signUp(email, password);
-            currentUser = user;
+            await createUserWithEmailAndPassword(auth, email, password);
             errorDiv.textContent = '';
             hideAuthModal();
-            updateAuthUI();
         } catch (error) {
             errorDiv.textContent = 'Signup failed: ' + error.message;
         }
@@ -135,10 +104,7 @@ if (signupForm) {
 // Logout
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        window.leaderboardSystem.logout();
-        currentUser = null;
-        gameScoreSaved = false;
-        updateAuthUI();
+        await signOut(auth);
     });
 }
 
@@ -159,71 +125,36 @@ if (authModalClose) {
     authModalClose.addEventListener('click', hideAuthModal);
 }
 
-// Close modal on outside click
 if (authModal) {
     authModal.addEventListener('click', (e) => {
         if (e.target === authModal) hideAuthModal();
     });
 }
 
-// Initialize auth state
-async function initAuth() {
-    await waitForLeaderboard();
-    currentUser = window.leaderboardSystem.getCurrentUserInfo();
-    updateAuthUI();
-}
-
-// Save score to leaderboard (called from script.js)
-window.saveScoreToLeaderboard = async function(score, hits) {
-    if (!currentUser) {
-        console.log('Guest play - score not saved to leaderboard');
-        return false;
-    }
+// Auth state listener
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
     
-    if (gameScoreSaved) return false;
-    
-    try {
-        const saved = window.leaderboardSystem.saveScore(score, hits);
-        if (saved) {
-            gameScoreSaved = true;
-            console.log('Score saved to leaderboard:', Math.floor(score));
-            
-            // Show success message
-            const summaryResult = document.querySelector('.summary__result');
-            if (summaryResult) {
-                const scoreSavedMsg = document.createElement('div');
-                scoreSavedMsg.className = 'score-saved-message';
-                scoreSavedMsg.innerHTML = '✅ Score saved to leaderboard!';
-                scoreSavedMsg.style.cssText = `
-                    position: absolute;
-                    bottom: -40px;
-                    left: 0;
-                    right: 0;
-                    text-align: center;
-                    font-size: 0.8rem;
-                    color: #00e5b5;
-                    animation: fadeUp 0.5s ease;
-                `;
-                summaryResult.appendChild(scoreSavedMsg);
-                setTimeout(() => scoreSavedMsg.remove(), 3000);
-            }
+    if (user) {
+        if (userBar) {
+            userBar.style.display = 'flex';
+            userEmailSpan.textContent = user.email.split('@')[0];
         }
-        return true;
-    } catch (error) {
-        console.error('Error saving score:', error);
-        return false;
+        if (showAuthBtn) showAuthBtn.style.display = 'none';
+        
+        const startBtn = document.querySelector('.btn--start');
+        if (startBtn) startBtn.style.pointerEvents = 'auto';
+    } else {
+        if (userBar) userBar.style.display = 'none';
+        if (showAuthBtn) showAuthBtn.style.display = 'block';
+        
+        const startBtn = document.querySelector('.btn--start');
+        if (startBtn) startBtn.style.pointerEvents = 'auto';
     }
-};
-
-window.resetScoreSavedFlag = function() {
-    gameScoreSaved = false;
-};
+});
 
 window.getCurrentUser = function() {
     return currentUser;
 };
 
-// Start initialization
-initAuth();
-
-console.log('Game Auth initialized with localStorage leaderboard!');
+console.log('Firebase Auth initialized!');

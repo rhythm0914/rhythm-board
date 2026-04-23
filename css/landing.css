@@ -506,14 +506,13 @@ body {
     backdrop-filter: blur(10px);
     border-radius: 20px;
     overflow: hidden;
-    max-width: 700px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
-/* Leaderboard 4-column layout */
 .leaderboard-header {
-    display: grid;
-    grid-template-columns: 60px 1fr 100px 80px;
+    display: flex;
+    justify-content: space-between;
     padding: 15px 20px;
     background: rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid var(--color-purple-light);
@@ -522,12 +521,11 @@ body {
 }
 
 .leaderboard-entry {
-    display: grid;
-    grid-template-columns: 60px 1fr 100px 80px;
+    display: flex;
+    justify-content: space-between;
     padding: 12px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: all var(--transition-fast);
-    align-items: center;
 }
 
 .leaderboard-entry:hover {
