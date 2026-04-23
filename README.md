@@ -1,44 +1,26 @@
-# 🎵 Rhythm-Board
+# Rhythm
 
-### Tap. Feel. Master the beat.
+This is a web-based rhythm game written in HTML, CSS and JavaScript.
 
-[![GitHub Pages](https://img.shields.io/badge/Hosted%20on-GitHub%20Pages-black?logo=github)](https://YOUR_USERNAME.github.io/rhythm-board/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth-orange)](https://firebase.google.com)
+The song name is Kataware Doki from Anime "Your Name" (君の名は ー 片割れ時).
+The original song is written by Yojiro Noda. The piano synthesia version in
+this game is composed by [Theishter](http://www.theishter.com).
+The note animation is hard-coded.
 
-**Rhythm-Board** is a precision rhythm tap game where your timing is everything. Tap along with the beat, build your combo, and climb the leaderboard.
+![screenshot](./img/screenshot.gif)
 
-## 🎮 Play Now
+## Getting Started
 
-👉 **[Play Rhythm-Board](https://YOUR_USERNAME.github.io/rhythm-board/)** 👈
+It is recommended to play this game on Google Chrome.
 
-## 🎯 Features
+Visit [this page](https://chloeliang.github.io/rhythm-game/) to play the game.
 
-- ✅ Precision timing engine (±1ms accuracy)
-- ✅ Perfect/Great/Good/Miss judgment system
-- ✅ Combo system with multipliers
-- ✅ User accounts with Firebase Auth
-- ✅ Personal high scores
-- ✅ Global leaderboard
-- ✅ Keyboard + Touch controls
-- ✅ Responsive design
+## Contributing
 
-## 🛠️ Tech Stack
+When contributing to this repository, please first discuss the change you wish to
+make via issue, email, or any other method with the owners of this repository
+before making a change.
 
-| Layer | Technology |
-|:---|:---|
-| Frontend | HTML5, CSS3, JavaScript |
-| Authentication | Firebase Auth |
-| Database | Firestore |
-| Hosting | GitHub Pages |
+## License
 
-## 🎮 Controls
-
-| Action | Desktop | Mobile |
-|:---|:---|:---|
-| Tap Left | ← or A | Tap left button |
-| Tap Down | ↓ or S | Tap down button |
-| Tap Up | ↑ or W | Tap up button |
-| Tap Right | → or D | Tap right button |
-
-## 📁 Project Structure
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

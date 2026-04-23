@@ -3,464 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Rhythm-Board | O2Jam Style 7-Key Rhythm Game</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0f0f23 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .game-wrapper {
-            max-width: 1400px;
-            width: 100%;
-        }
-
-        /* Auth Section */
-        .auth-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .auth-card {
-            text-align: center;
-        }
-
-        .auth-card h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #3820ab, #d600d6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin: 30px 0 20px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: #f0f0f0;
-            cursor: pointer;
-            font-size: 1rem;
-            border-radius: 10px;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .tab-btn.active {
-            background: #d600d6;
-            color: white;
-        }
-
-        .auth-form {
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .auth-form.active {
-            display: flex;
-        }
-
-        .auth-form input {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-
-        .auth-form input:focus {
-            outline: none;
-            border-color: #d600d6;
-        }
-
-        .auth-form button {
-            padding: 12px;
-            background: #d600d6;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-weight: 600;
-        }
-
-        .auth-form button:hover {
-            background: #3820ab;
-        }
-
-        .error-message {
-            color: #ff4444;
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-
-        /* Song Selection Screen */
-        .song-selection {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .song-selection h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #3820ab;
-        }
-
-        .songs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .song-card {
-            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
-            border-radius: 15px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .song-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border-color: #d600d6;
-        }
-
-        .song-cover {
-            width: 100%;
-            height: 150px;
-            background: linear-gradient(135deg, #3820ab, #d600d6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
-
-        .song-info {
-            padding: 15px;
-        }
-
-        .song-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #3820ab;
-            margin-bottom: 5px;
-        }
-
-        .song-artist {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .song-difficulty {
-            display: inline-block;
-            padding: 3px 10px;
-            background: #d600d6;
-            color: white;
-            border-radius: 15px;
-            font-size: 0.75rem;
-        }
-
-        /* Game Section */
-        .game-section {
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .user-info {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            color: white;
-        }
-
-        .user-email {
-            font-weight: 600;
-        }
-
-        .logout-btn, .exit-song-btn {
-            padding: 5px 15px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-        }
-
-        .exit-song-btn {
-            background: #ff8800;
-        }
-
-        .score-board {
-            display: flex;
-            gap: 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: white;
-            flex-wrap: wrap;
-        }
-
-        .score-board div {
-            background: linear-gradient(135deg, #3820ab, #d600d6);
-            padding: 5px 15px;
-            border-radius: 20px;
-        }
-
-        .game-canvas {
-            display: block;
-            margin: 0 auto;
-            background: #0a0a1a;
-            border-radius: 10px;
-            width: 100%;
-            height: auto;
-            cursor: pointer;
-            box-shadow: 0 0 30px rgba(0, 223, 255, 0.2);
-        }
-
-        .keyboard-hint {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.8rem;
-            margin-top: 10px;
-            font-family: monospace;
-        }
-
-        .tap-area {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .tap-btn {
-            width: 70px;
-            height: 70px;
-            font-size: 1.3rem;
-            background: linear-gradient(135deg, #2a1a4a, #4a0a4a);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.05s linear;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            font-family: monospace;
-        }
-
-        .tap-btn:nth-child(1) { background: linear-gradient(135deg, #ff6b6b, #c92a2a); }
-        .tap-btn:nth-child(2) { background: linear-gradient(135deg, #fccd12, #e67700); }
-        .tap-btn:nth-child(3) { background: linear-gradient(135deg, #5f3dc4, #3b1f8a); }
-        .tap-btn:nth-child(4) { background: linear-gradient(135deg, #20c997, #0b5e42); }
-        .tap-btn:nth-child(5) { background: linear-gradient(135deg, #3b1f8a, #1a0a4a); }
-        .tap-btn:nth-child(6) { background: linear-gradient(135deg, #fccd12, #e67700); }
-        .tap-btn:nth-child(7) { background: linear-gradient(135deg, #ff6b6b, #c92a2a); }
-
-        .tap-btn:active, .tap-btn.active {
-            transform: scale(0.92);
-            filter: brightness(1.3);
-            box-shadow: 0 0 20px currentColor;
-        }
-
-        .judgment {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            margin-top: 10px;
-            height: 70px;
-        }
-
-        .judgment.perfect { color: #ffd700; text-shadow: 0 0 10px #ffd700; animation: pop 0.3s ease; }
-        .judgment.great { color: #00ff00; text-shadow: 0 0 10px #00ff00; animation: pop 0.3s ease; }
-        .judgment.good { color: #87ceeb; text-shadow: 0 0 10px #87ceeb; }
-        .judgment.miss { color: #ff4444; text-shadow: 0 0 10px #ff4444; }
-
-        @keyframes pop {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .combo-indicator {
-            text-align: center;
-            font-size: 1.5rem;
-            color: #00dfff;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 15px;
-        }
-
-        .game-btn {
-            padding: 8px 20px;
-            background: #d600d6;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-        }
-
-        .game-btn:hover {
-            background: #3820ab;
-        }
-
-        .song-info-display {
-            text-align: center;
-            color: white;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 800px) {
-            .tap-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 1rem;
-            }
-            
-            .score-board {
-                font-size: 0.8rem;
-                gap: 8px;
-            }
-            
-            .judgment {
-                font-size: 1.2rem;
-            }
-        }
-    </style>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta property="og:title" content="Rhythm | Kataware Doki">
+    <meta property="og:description" content="7-key rhythm game - Tap to the beat of Kataware Doki from Your Name!">
+    <link rel="shortcut icon" type="image/png" href="https://img.icons8.com/dusk/50/ecf0f1/musical-notes.png">
+    <link href="https://fonts.googleapis.com/css?family=Playball" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Rhythm Game | Kataware Doki</title>
 </head>
 <body>
+    <audio class="song" src="media/music.mp3"></audio>
 
-<div class="game-wrapper">
-    <!-- Auth Section -->
-    <div id="auth-section" class="auth-section">
-        <div class="auth-card">
-            <h1>🎵 Rhythm-Board</h1>
-            <p>7-Key O2Jam Style Rhythm Game</p>
-            
+    <!-- User Info Bar -->
+    <div class="user-bar" id="userBar" style="display: none;">
+        <div class="user-info">
+            <span class="user-email" id="userEmail"></span>
+            <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+        </div>
+    </div>
+
+    <main>
+        <div class="game">
+            <div class="hit">
+                <div class="hit__combo"></div>
+                <div class="hit__accuracy"></div>
+            </div>
+            <div class="track-container"></div>
+            <div class="key-container">
+                <div class="key key--s key--blue"><div class="keypress keypress--blue"></div><span>S</span></div>
+                <div class="key key--d key--red"><div class="keypress keypress--red"></div><span>D</span></div>
+                <div class="key key--f key--blue"><div class="keypress keypress--blue"></div><span>F</span></div>
+                <div class="key key--space key--orange"><div class="keypress keypress--orange"></div><span>Space</span></div>
+                <div class="key key--j key--blue"><div class="keypress keypress--blue"></div><span>J</span></div>
+                <div class="key key--k key--red"><div class="keypress keypress--red"></div><span>K</span></div>
+                <div class="key key--l key--blue"><div class="keypress keypress--blue"></div><span>L</span></div>
+            </div>
+        </div>
+
+        <div class="menu">
+            <div>
+                <h1>Rhythm</h1>
+                <p>Made with <span class="heart">❤</span> by Rhythm-Board Team</p>
+            </div>
+            <div class="menu__song">
+                <h2>Your Name OST - Kataware Doki</h2>
+                <div>
+                    <p>Original song composed by <span>Yojiro Noda</span></p>
+                    <p>Piano synthesia version by <a class="author" target="_blank" href="http://www.theishter.com/">Theishter</a></p>
+                </div>
+            </div>
+            <div class="menu__config">
+                <div class="config__speed">
+                    <h2>Speed</h2>
+                    <div>
+                        <a class="btn btn--small btn--selected" href="#">1x</a>
+                        <a class="btn btn--small" href="#">2x</a>
+                        <a class="btn btn--small" href="#">3x</a>
+                    </div>
+                </div>
+                <div class="config__challenge">
+                    <h2>Challenge</h2>
+                    <div><a class="btn btn--small" href="#">Fade</a></div>
+                </div>
+            </div>
+            <div class="menu_start">
+                <a class="btn btn--primary btn--start" href="#">Start</a>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn-auth" id="showAuthBtn">🔐 Sign In</button>
+            </div>
+        </div>
+
+        <div class="summary">
+            <div class="summary__timer"></div>
+            <div class="summary__result">
+                <h2 class="result__heading">Clear</h2>
+                <div class="result__accuracy perfect"><p class="accuracy__heading">Perfect</p><span>:</span><p class="accuracy__count perfect__count"></p></div>
+                <div class="result__accuracy good"><p class="accuracy__heading">Good</p><span>:</span><p class="accuracy__count good__count"></p></div>
+                <div class="result__accuracy bad"><p class="accuracy__heading">Bad</p><span>:</span><p class="accuracy__count bad__count"></p></div>
+                <div class="result__accuracy miss"><p class="accuracy__heading">Miss</p><span>:</span><p class="accuracy__count miss__count"></p></div>
+                <div class="result__accuracy combo"><p class="accuracy__heading">Max Combo</p><span>:</span><p class="accuracy__count combo__count"></p></div>
+                <div class="result__accuracy score"><p class="accuracy__heading">Score</p><span>:</span><p class="accuracy__count score__count"></p></div>
+                <div class="action-buttons">
+                    <button class="action-btn action-btn--home" id="homeBtn">🏠 Home</button>
+                    <button class="action-btn action-btn--replay" id="replayBtn">🎵 Replay</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <div class="auth-modal-header">
+                <h2>Sign In to Save Score</h2>
+                <button class="auth-modal-close" id="authModalClose">&times;</button>
+            </div>
             <div class="auth-tabs">
-                <button class="tab-btn active" data-tab="login">Login</button>
-                <button class="tab-btn" data-tab="signup">Sign Up</button>
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
             </div>
-            
-            <form id="login-form" class="auth-form active">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button type="submit">Login</button>
+            <form id="loginForm" class="auth-form active">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button type="submit" class="auth-submit">Login</button>
+                <p class="auth-error" id="loginError"></p>
             </form>
-            
-            <form id="signup-form" class="auth-form">
-                <input type="email" id="signup-email" placeholder="Email" required>
-                <input type="password" id="signup-password" placeholder="Password" required>
-                <button type="submit">Create Account</button>
+            <form id="signupForm" class="auth-form">
+                <input type="email" id="signupEmail" placeholder="Email" required>
+                <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
+                <button type="submit" class="auth-submit">Create Account</button>
+                <p class="auth-error" id="signupError"></p>
             </form>
-            
-            <div id="auth-error" class="error-message"></div>
-        </div>
-    </div>
-    
-    <!-- Song Selection Screen -->
-    <div id="song-selection" class="song-selection" style="display: none;">
-        <h2>🎵 SELECT A SONG</h2>
-        <div id="songs-grid" class="songs-grid"></div>
-        <div style="text-align: center; margin-top: 20px;">
-            <span id="song-selection-email" style="color: #3820ab;"></span>
-            <button id="logout-from-songs" class="logout-btn" style="background: #ff4444; margin-left: 15px;">Logout</button>
-        </div>
-    </div>
-    
-    <!-- Game Section -->
-    <div id="game-section" class="game-section">
-        <div class="game-header">
-            <div class="user-info">
-                <span class="user-email" id="user-email"></span>
-                <button id="exit-song-btn" class="exit-song-btn">⬅ Exit</button>
-                <button id="logout-btn" class="logout-btn">Logout</button>
-            </div>
-            <div class="score-board">
-                <div>Score: <span id="score">0</span></div>
-                <div>Combo: <span id="combo">0</span>x</div>
-                <div>Max Combo: <span id="max-combo">0</span></div>
-                <div>Accuracy: <span id="accuracy">0</span>%</div>
+            <div class="auth-guest">
+                <p>or continue as guest (scores won't be saved)</p>
+                <button id="guestGameBtn" class="guest-btn">Play as Guest</button>
             </div>
         </div>
-        
-        <div class="song-info-display" id="song-info-display"></div>
-        
-        <canvas id="game-canvas" class="game-canvas" width="1200" height="500"></canvas>
-        
-        <div class="keyboard-hint">
-            S | D | F | SPACE | J | K | L
-        </div>
-        
-        <div class="tap-area">
-            <button class="tap-btn" data-lane="0">S</button>
-            <button class="tap-btn" data-lane="1">D</button>
-            <button class="tap-btn" data-lane="2">F</button>
-            <button class="tap-btn" data-lane="3">␣</button>
-            <button class="tap-btn" data-lane="4">J</button>
-            <button class="tap-btn" data-lane="5">K</button>
-            <button class="tap-btn" data-lane="6">L</button>
-        </div>
-        
-        <div class="game-controls">
-            <button id="restart-btn" class="game-btn">🔄 Restart</button>
-        </div>
-        
-        <div id="judgment" class="judgment"></div>
-        <div class="combo-indicator" id="combo-indicator"></div>
     </div>
-</div>
 
-<script type="module" src="js/firebase-config.js"></script>
-<script type="module" src="js/game.js"></script>
+    <!-- Load scripts: song.js first, then game-auth (module), then script.js -->
+    <script src="scripts/song.js"></script>
+    <script type="module" src="scripts/game-auth.js"></script>
+    <script src="scripts/script.js"></script>
 </body>
 </html>
