@@ -1,5 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
+import { getFirestore, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -13,6 +14,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // DOM Elements
 const particlesContainer = document.getElementById('particles');
@@ -20,6 +22,7 @@ const previewCanvas = document.getElementById('previewCanvas');
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const navLinks = document.querySelector('.nav-links');
 const tapDemoBtns = document.querySelectorAll('.tap-demo-btn');
+const leaderboardBody = document.getElementById('leaderboardBody');
 
 // ============================================
 // CREATE FLOATING PARTICLES
@@ -28,7 +31,6 @@ const tapDemoBtns = document.querySelectorAll('.tap-demo-btn');
 function createParticles() {
     if (!particlesContainer) return;
     
-    particlesContainer.innerHTML = '';
     const particleCount = window.innerWidth < 768 ? 30 : 50;
     
     for (let i = 0; i < particleCount; i++) {
@@ -50,8 +52,6 @@ function createParticles() {
 // PREVIEW CANVAS ANIMATION
 // ============================================
 
-let previewLanes = [false, false, false, false, false, false, false];
-
 function initPreviewCanvas() {
     if (!previewCanvas) return;
     
@@ -60,20 +60,22 @@ function initPreviewCanvas() {
     previewCanvas.height = 300;
     
     let beat = 0;
+    let lanes = [false, false, false, false, false, false, false];
     const laneWidth = previewCanvas.width / 7;
     const laneLabels = ['S', 'D', 'F', '␣', 'J', 'K', 'L'];
-    const laneColors = ['#4361ee', '#e63946', '#4361ee', '#f4a261', '#4361ee', '#e63946', '#4361ee'];
+    const laneColors = ['#ff6b6b', '#fccd12', '#5f3dc4', '#20c997', '#3b1f8a', '#fccd12', '#ff6b6b'];
     
     function drawPreview() {
         if (!ctx) return;
         
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         
+        // Draw lanes
         for (let i = 0; i < 7; i++) {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.strokeRect(i * laneWidth, 0, laneWidth, previewCanvas.height);
             
-            if (previewLanes[i]) {
+            if (lanes[i]) {
                 ctx.fillStyle = `rgba(0, 223, 255, 0.3)`;
                 ctx.fillRect(i * laneWidth, 0, laneWidth, previewCanvas.height);
             }
@@ -84,6 +86,7 @@ function initPreviewCanvas() {
             ctx.fillText(laneLabels[i], i * laneWidth + laneWidth / 2, previewCanvas.height - 15);
         }
         
+        // Draw moving beat line
         beat = (beat + 0.05) % 4;
         const lineY = previewCanvas.height - 80 - beat * 20;
         ctx.beginPath();
@@ -93,6 +96,7 @@ function initPreviewCanvas() {
         ctx.lineWidth = 3;
         ctx.stroke();
         
+        // Draw hit zone
         ctx.fillStyle = 'rgba(210, 145, 223, 0.15)';
         ctx.fillRect(0, previewCanvas.height - 80, previewCanvas.width, 60);
         
@@ -104,14 +108,21 @@ function initPreviewCanvas() {
     }
     
     drawPreview();
+    return { lanes };
 }
 
-function setupDemoTaps() {
+// ============================================
+// DEMO TAP EFFECTS
+// ============================================
+
+function setupDemoTaps(previewState) {
     tapDemoBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const lane = parseInt(btn.dataset.demoLane);
-            previewLanes[lane] = true;
-            setTimeout(() => { previewLanes[lane] = false; }, 150);
+            if (previewState && previewState.lanes) {
+                previewState.lanes[lane] = true;
+                setTimeout(() => { previewState.lanes[lane] = false; }, 150);
+            }
             
             btn.style.transform = 'scale(0.9)';
             btn.style.background = '#00dfff';
@@ -124,6 +135,86 @@ function setupDemoTaps() {
             }, 150);
         });
     });
+}
+
+// ============================================
+// REAL LEADERBOARD FROM FIREBASE
+// ============================================
+
+async function loadRealLeaderboard() {
+    if (!leaderboardBody) return;
+    
+    console.log('Loading real leaderboard from Firebase...');
+    
+    leaderboardBody.innerHTML = `
+        <div class="leaderboard-entry">
+            <span colspan="3" style="text-align: center;">Loading leaderboard...</span>
+        </div>
+    `;
+    
+    try {
+        const leaderboardRef = collection(db, 'leaderboard');
+        const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            leaderboardBody.innerHTML = `
+                <div class="leaderboard-entry">
+                    <span colspan="3" style="text-align: center;">No scores yet! Be the first to play! 🎵</span>
+                </div>
+            `;
+            return;
+        }
+        
+        let leaderboardHTML = '';
+        let rank = 1;
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const playerName = data.email ? data.email.split('@')[0] : 'Anonymous Player';
+            const score = data.score.toLocaleString();
+            
+            let rankDisplay = `#${rank}`;
+            if (rank === 1) rankDisplay = '🏆 #1';
+            if (rank === 2) rankDisplay = '🥈 #2';
+            if (rank === 3) rankDisplay = '🥉 #3';
+            
+            leaderboardHTML += `
+                <div class="leaderboard-entry">
+                    <span class="rank">${rankDisplay}</span>
+                    <span>${rank === 1 ? '👑 ' : ''}${escapeHtml(playerName)}</span>
+                    <span>${score}</span>
+                </div>
+            `;
+            rank++;
+        });
+        
+        leaderboardBody.innerHTML = leaderboardHTML;
+        console.log('Leaderboard loaded with', querySnapshot.size, 'entries');
+        
+        // Update player count
+        const playerCountSpan = document.getElementById('playerCount');
+        if (playerCountSpan) {
+            const usersRef = collection(db, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            const totalPlayers = usersSnapshot.size;
+            playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : totalPlayers.toString();
+        }
+        
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        leaderboardBody.innerHTML = `
+            <div class="leaderboard-entry">
+                <span colspan="3" style="text-align: center; color: #ff4444;">Unable to load leaderboard.</span>
+            </div>
+        `;
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============================================
@@ -165,7 +256,7 @@ function setupScrollReveal() {
         });
     }, observerOptions);
     
-    document.querySelectorAll('.feature-card, .step').forEach(el => {
+    document.querySelectorAll('.feature-card, .step, .leaderboard-card').forEach(el => {
         observer.observe(el);
     });
 }
@@ -184,6 +275,7 @@ function setupSmoothScroll() {
             const target = document.querySelector(targetId);
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Close mobile menu if open
                 if (navLinks && navLinks.classList.contains('active')) {
                     navLinks.classList.remove('active');
                     const spans = mobileMenuBtn?.querySelectorAll('span');
@@ -198,36 +290,24 @@ function setupSmoothScroll() {
     });
 }
 
-function setupKeyboardDemo() {
-    document.addEventListener('keydown', (e) => {
-        const keyMap = { 
-            's': 0, 'd': 1, 'f': 2, ' ': 3, 'Space': 3,
-            'j': 4, 'k': 5, 'l': 6,
-            'S': 0, 'D': 1, 'F': 2, 'J': 4, 'K': 5, 'L': 6
-        };
-        
-        if (keyMap[e.key] !== undefined) {
-            e.preventDefault();
-            const demoBtn = document.querySelector(`.tap-demo-btn[data-demo-lane="${keyMap[e.key]}"]`);
-            if (demoBtn) demoBtn.click();
-        }
-    });
-}
-
 // ============================================
 // INITIALIZE
 // ============================================
 
-function init() {
+async function init() {
     console.log('Initializing Rhythm-Board Landing Page...');
     
     createParticles();
-    initPreviewCanvas();
-    setupDemoTaps();
+    const previewState = initPreviewCanvas();
+    setupDemoTaps(previewState);
     setupMobileMenu();
     setupSmoothScroll();
     setupScrollReveal();
-    setupKeyboardDemo();
+    
+    await loadRealLeaderboard();
+    
+    // Refresh leaderboard every 30 seconds
+    setInterval(loadRealLeaderboard, 30000);
     
     console.log('Landing Page initialized! 🎵');
 }
@@ -238,3 +318,18 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
+
+// Keyboard support for demo
+document.addEventListener('keydown', (e) => {
+    const keyMap = { 
+        's': 0, 'd': 1, 'f': 2, ' ': 3, 'Space': 3,
+        'j': 4, 'k': 5, 'l': 6,
+        'S': 0, 'D': 1, 'F': 2, 'J': 4, 'K': 5, 'L': 6
+    };
+    
+    if (keyMap[e.key] !== undefined) {
+        e.preventDefault();
+        const demoBtn = document.querySelector(`.tap-demo-btn[data-demo-lane="${keyMap[e.key]}"]`);
+        if (demoBtn) demoBtn.click();
+    }
+});

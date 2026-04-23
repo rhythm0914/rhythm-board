@@ -28,6 +28,7 @@
             <a href="#home">Home</a>
             <a href="#features">Features</a>
             <a href="#howto">How to Play</a>
+            <a href="#leaderboard">Leaderboard</a>
             <a href="game.html" class="play-btn-nav">🎮 Play Now</a>
         </div>
         <div class="mobile-menu-btn" id="mobileMenuBtn">
@@ -61,7 +62,7 @@
                     <div class="stat-label">Precision</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-number">100+</div>
+                    <div class="stat-number" id="playerCount">10K+</div>
                     <div class="stat-label">Players</div>
                 </div>
             </div>
@@ -155,6 +156,27 @@
         </div>
     </section>
 
+    <section id="leaderboard" class="leaderboard-preview">
+        <h2 class="section-title">Top Players</h2>
+        <div class="leaderboard-card">
+            <div class="leaderboard-header">
+                <span>Rank</span>
+                <span>Player</span>
+                <span>Score</span>
+            </div>
+            <div class="leaderboard-body" id="leaderboardBody">
+                <div class="leaderboard-entry">
+                    <span class="rank">#1</span>
+                    <span>🎵 Loading...</span>
+                    <span>---</span>
+                </div>
+            </div>
+        </div>
+        <div class="leaderboard-cta">
+            <p>⭐ Sign in and play to see your name on the real leaderboard!</p>
+        </div>
+    </section>
+
     <section class="cta-section">
         <h2>Ready to Test Your Rhythm?</h2>
         <p>Join thousands of players and discover your timing precision.</p>
@@ -177,6 +199,7 @@
                 <a href="#home">Home</a>
                 <a href="#features">Features</a>
                 <a href="#howto">How to Play</a>
+                <a href="#leaderboard">Leaderboard</a>
             </div>
             <div class="footer-section">
                 <h4>Game Info</h4>
@@ -196,6 +219,36 @@
             © 2024 Rhythm-Board. All rights reserved. Tap to the beat!
         </div>
     </footer>
+</div>
+
+<!-- Auth Modal -->
+<div class="auth-modal" id="authModal">
+    <div class="auth-modal-content">
+        <div class="auth-modal-header">
+            <h2>Welcome to Rhythm-Board</h2>
+            <button class="auth-modal-close" id="authModalClose">&times;</button>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Login</button>
+            <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+        <form id="loginForm" class="auth-form active">
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button type="submit" class="auth-submit">Login</button>
+            <p class="auth-error" id="loginError"></p>
+        </form>
+        <form id="signupForm" class="auth-form">
+            <input type="email" id="signupEmail" placeholder="Email" required>
+            <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
+            <button type="submit" class="auth-submit">Create Account</button>
+            <p class="auth-error" id="signupError"></p>
+        </form>
+        <div class="auth-guest">
+            <p>or continue as guest</p>
+            <button id="guestBtn" class="guest-btn">Play as Guest</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="js/landing.js"></script>

@@ -1,6 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, addDoc, collection } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -15,8 +16,10 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 let currentUser = null;
+let gameScoreSaved = false;
 
 // DOM Elements
 const authModal = document.getElementById('authModal');
@@ -70,10 +73,10 @@ if (loginForm) {
         
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            errorDiv.textContent = '';
+            if (errorDiv) errorDiv.textContent = '';
             hideAuthModal();
         } catch (error) {
-            errorDiv.textContent = 'Login failed: ' + error.message;
+            if (errorDiv) errorDiv.textContent = 'Login failed: ' + error.message;
         }
     });
 }
@@ -87,16 +90,21 @@ if (signupForm) {
         const errorDiv = document.getElementById('signupError');
         
         if (password.length < 6) {
-            errorDiv.textContent = 'Password must be at least 6 characters';
+            if (errorDiv) errorDiv.textContent = 'Password must be at least 6 characters';
             return;
         }
         
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            errorDiv.textContent = '';
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await setDoc(doc(db, 'users', userCredential.user.uid), {
+                email: email,
+                highScore: 0,
+                createdAt: new Date().toISOString()
+            });
+            if (errorDiv) errorDiv.textContent = '';
             hideAuthModal();
         } catch (error) {
-            errorDiv.textContent = 'Signup failed: ' + error.message;
+            if (errorDiv) errorDiv.textContent = 'Signup failed: ' + error.message;
         }
     });
 }
@@ -125,6 +133,7 @@ if (authModalClose) {
     authModalClose.addEventListener('click', hideAuthModal);
 }
 
+// Close modal on outside click
 if (authModal) {
     authModal.addEventListener('click', (e) => {
         if (e.target === authModal) hideAuthModal();
@@ -144,6 +153,12 @@ onAuthStateChanged(auth, async (user) => {
         
         const startBtn = document.querySelector('.btn--start');
         if (startBtn) startBtn.style.pointerEvents = 'auto';
+        
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+            const highScore = userDoc.data().highScore || 0;
+            console.log('User high score:', highScore);
+        }
     } else {
         if (userBar) userBar.style.display = 'none';
         if (showAuthBtn) showAuthBtn.style.display = 'block';
@@ -153,8 +168,49 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Export functions to window for script.js to use
+window.saveScoreToLeaderboard = async function(score) {
+    if (!currentUser) {
+        console.log('Guest play - score not saved to leaderboard');
+        return false;
+    }
+    
+    if (gameScoreSaved) return false;
+    
+    try {
+        await addDoc(collection(db, 'leaderboard'), {
+            userId: currentUser.uid,
+            email: currentUser.email,
+            score: Math.floor(score),
+            date: new Date().toISOString()
+        });
+        
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const currentHighScore = userDoc.exists() ? (userDoc.data().highScore || 0) : 0;
+        
+        if (score > currentHighScore) {
+            await setDoc(doc(db, 'users', currentUser.uid), {
+                email: currentUser.email,
+                highScore: Math.floor(score),
+                lastPlayed: new Date().toISOString()
+            }, { merge: true });
+        }
+        
+        gameScoreSaved = true;
+        console.log('Score saved to leaderboard:', Math.floor(score));
+        return true;
+    } catch (error) {
+        console.error('Error saving score:', error);
+        return false;
+    }
+};
+
+window.resetScoreSavedFlag = function() {
+    gameScoreSaved = false;
+};
+
 window.getCurrentUser = function() {
     return currentUser;
 };
 
-console.log('Firebase Auth initialized!');
+console.log('Firebase Auth initialized for Rhythm Game!');
