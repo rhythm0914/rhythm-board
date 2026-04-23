@@ -13,7 +13,7 @@ The note animation is hard-coded.
 
 It is recommended to play this game on Google Chrome.
 
-Visit [this page](https://chloeliang.github.io/rhythm-game/) to play the game.
+Visit [this page](https://rhythm0914.github.io/rhythm-board/) to play the game.
 
 ## Contributing
 
