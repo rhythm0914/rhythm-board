@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Rhythm-Board | O2Jam Style Rhythm Game</title>
+    <title>Rhythm-Board | O2Jam Style 7-Key Rhythm Game</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #3820ab 0%, #d600d6 50%, #00dfff 100%);
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0f0f23 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -22,7 +22,7 @@
         }
 
         .game-wrapper {
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
         }
 
@@ -131,7 +131,7 @@
 
         .songs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
@@ -187,26 +187,12 @@
             font-size: 0.75rem;
         }
 
-        .back-to-songs {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background: #3820ab;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 20px;
-        }
-
         /* Game Section */
         .game-section {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             display: none;
         }
 
@@ -250,9 +236,10 @@
         .score-board {
             display: flex;
             gap: 20px;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             color: white;
+            flex-wrap: wrap;
         }
 
         .score-board div {
@@ -269,36 +256,52 @@
             width: 100%;
             height: auto;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 223, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 223, 255, 0.2);
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin-top: 10px;
+            font-family: monospace;
         }
 
         .tap-area {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             justify-content: center;
             margin: 20px 0;
             flex-wrap: wrap;
         }
 
         .tap-btn {
-            width: 80px;
-            height: 80px;
-            font-size: 2rem;
-            background: linear-gradient(135deg, #3820ab, #d600d6);
+            width: 70px;
+            height: 70px;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #2a1a4a, #4a0a4a);
             color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 12px;
             cursor: pointer;
-            transition: transform 0.1s, background 0.1s;
+            transition: all 0.05s linear;
             font-weight: bold;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: monospace;
         }
 
+        .tap-btn:nth-child(1) { background: linear-gradient(135deg, #ff6b6b, #c92a2a); }
+        .tap-btn:nth-child(2) { background: linear-gradient(135deg, #fccd12, #e67700); }
+        .tap-btn:nth-child(3) { background: linear-gradient(135deg, #5f3dc4, #3b1f8a); }
+        .tap-btn:nth-child(4) { background: linear-gradient(135deg, #20c997, #0b5e42); }
+        .tap-btn:nth-child(5) { background: linear-gradient(135deg, #3b1f8a, #1a0a4a); }
+        .tap-btn:nth-child(6) { background: linear-gradient(135deg, #fccd12, #e67700); }
+        .tap-btn:nth-child(7) { background: linear-gradient(135deg, #ff6b6b, #c92a2a); }
+
         .tap-btn:active, .tap-btn.active {
-            transform: scale(0.95);
-            background: #00dfff;
-            color: #3820ab;
-            box-shadow: 0 0 20px #00dfff;
+            transform: scale(0.92);
+            filter: brightness(1.3);
+            box-shadow: 0 0 20px currentColor;
         }
 
         .judgment {
@@ -324,6 +327,7 @@
             font-size: 1.5rem;
             color: #00dfff;
             margin-top: 10px;
+            font-weight: bold;
         }
 
         .game-controls {
@@ -355,32 +359,19 @@
             font-size: 0.9rem;
         }
 
-        @media (max-width: 600px) {
-            .tap-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
-            
-            .score-board {
-                font-size: 0.9rem;
-                gap: 10px;
-            }
-            
-            .game-header {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .judgment {
-                font-size: 1.5rem;
-            }
-        }
-
-        @media (max-width: 400px) {
+        @media (max-width: 800px) {
             .tap-btn {
                 width: 50px;
                 height: 50px;
+                font-size: 1rem;
+            }
+            
+            .score-board {
+                font-size: 0.8rem;
+                gap: 8px;
+            }
+            
+            .judgment {
                 font-size: 1.2rem;
             }
         }
@@ -393,7 +384,7 @@
     <div id="auth-section" class="auth-section">
         <div class="auth-card">
             <h1>🎵 Rhythm-Board</h1>
-            <p>Tap to the beat. Master your timing.</p>
+            <p>7-Key O2Jam Style Rhythm Game</p>
             
             <div class="auth-tabs">
                 <button class="tab-btn active" data-tab="login">Login</button>
@@ -419,12 +410,10 @@
     <!-- Song Selection Screen -->
     <div id="song-selection" class="song-selection" style="display: none;">
         <h2>🎵 SELECT A SONG</h2>
-        <div id="songs-grid" class="songs-grid">
-            <!-- Songs will be loaded dynamically -->
-        </div>
-        <div class="user-info" style="justify-content: center; margin-top: 20px;">
+        <div id="songs-grid" class="songs-grid"></div>
+        <div style="text-align: center; margin-top: 20px;">
             <span id="song-selection-email" style="color: #3820ab;"></span>
-            <button id="logout-from-songs" class="logout-btn" style="background: #ff4444;">Logout</button>
+            <button id="logout-from-songs" class="logout-btn" style="background: #ff4444; margin-left: 15px;">Logout</button>
         </div>
     </div>
     
@@ -433,30 +422,37 @@
         <div class="game-header">
             <div class="user-info">
                 <span class="user-email" id="user-email"></span>
-                <button id="exit-song-btn" class="exit-song-btn">⬅ Exit Song</button>
+                <button id="exit-song-btn" class="exit-song-btn">⬅ Exit</button>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
             <div class="score-board">
                 <div>Score: <span id="score">0</span></div>
                 <div>Combo: <span id="combo">0</span>x</div>
-                <div>Best: <span id="high-score">0</span></div>
+                <div>Max Combo: <span id="max-combo">0</span></div>
                 <div>Accuracy: <span id="accuracy">0</span>%</div>
             </div>
         </div>
         
         <div class="song-info-display" id="song-info-display"></div>
         
-        <canvas id="game-canvas" class="game-canvas" width="1000" height="500"></canvas>
+        <canvas id="game-canvas" class="game-canvas" width="1200" height="500"></canvas>
+        
+        <div class="keyboard-hint">
+            S | D | F | SPACE | J | K | L
+        </div>
         
         <div class="tap-area">
-            <button class="tap-btn" data-lane="0">←</button>
-            <button class="tap-btn" data-lane="1">↓</button>
-            <button class="tap-btn" data-lane="2">↑</button>
-            <button class="tap-btn" data-lane="3">→</button>
+            <button class="tap-btn" data-lane="0">S</button>
+            <button class="tap-btn" data-lane="1">D</button>
+            <button class="tap-btn" data-lane="2">F</button>
+            <button class="tap-btn" data-lane="3">␣</button>
+            <button class="tap-btn" data-lane="4">J</button>
+            <button class="tap-btn" data-lane="5">K</button>
+            <button class="tap-btn" data-lane="6">L</button>
         </div>
         
         <div class="game-controls">
-            <button id="restart-btn" class="game-btn">🔄 Restart Song</button>
+            <button id="restart-btn" class="game-btn">🔄 Restart</button>
         </div>
         
         <div id="judgment" class="judgment"></div>
@@ -464,7 +460,6 @@
     </div>
 </div>
 
-<!-- Firebase SDKs -->
 <script type="module" src="js/firebase-config.js"></script>
 <script type="module" src="js/game.js"></script>
 </body>
