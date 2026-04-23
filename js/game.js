@@ -21,7 +21,6 @@ const songSelectionEmail = document.getElementById('song-selection-email');
 const scoreSpan = document.getElementById('score');
 const comboSpan = document.getElementById('combo');
 const maxComboSpan = document.getElementById('max-combo');
-const highScoreSpan = document.getElementById('high-score');
 const accuracySpan = document.getElementById('accuracy');
 const judgmentDiv = document.getElementById('judgment');
 const comboIndicator = document.getElementById('combo-indicator');
@@ -42,13 +41,13 @@ if (canvas) {
 
 const LANE_COUNT = 7;
 const LANE_WIDTH = canvas ? canvas.width / LANE_COUNT : 171;
-const SCROLL_SPEED = 280;
+const SCROLL_SPEED = 300;
 const HIT_Y = canvas ? canvas.height - 100 : 400;
 
 const JUDGMENT_WINDOWS = {
-    perfect: 0.045,
-    great: 0.095,
-    good: 0.185
+    perfect: 0.05,
+    great: 0.10,
+    good: 0.20
 };
 
 const JUDGMENT_SCORES = {
@@ -66,6 +65,8 @@ const LANE_COLORS = [
     '#ff6b6b', '#fccd12', '#5f3dc4', '#20c997', '#3b1f8a', '#fccd12', '#ff6b6b'
 ];
 
+const LANE_LABELS = ['S', 'D', 'F', '␣', 'J', 'K', 'L'];
+
 // ============================================
 // Game Variables
 // ============================================
@@ -79,12 +80,13 @@ let gameActive = false;
 let gameStarted = false;
 let audioContext = null;
 let audioSource = null;
+let audioBuffer = null;
 let startTime = 0;
 let notes = [];
 let currentSong = null;
-let currentBeatmap = null;
 let animationId = null;
 let lastTimestamp = 0;
+let songDuration = 0;
 
 let judgmentStats = {
     perfect: 0,
@@ -95,7 +97,7 @@ let judgmentStats = {
 };
 
 // ============================================
-// Song Library with Real Beatmaps
+// Song Library
 // ============================================
 
 const SONGS = [
@@ -132,153 +134,84 @@ const SONGS = [
 ];
 
 // ============================================
-// Full Beatmap for Fly Mag Pie (140 BPM)
+// AUTO-GENERATE BEATMAP FROM BPM
 // ============================================
 
-const FLY_MAG_PIE_BEATMAP = {
-    songId: 'fly-mag-pie',
-    bpm: 140,
-    offset: 0.5,
-    duration: 118,
-    notes: [
-        // Intro
-        { time: 1.0, lane: 3, type: 'tap' },
-        { time: 1.5, lane: 2, type: 'tap' },
-        { time: 1.5, lane: 4, type: 'tap' },
-        { time: 2.0, lane: 1, type: 'tap' },
-        { time: 2.0, lane: 5, type: 'tap' },
-        { time: 2.5, lane: 0, type: 'tap' },
-        { time: 2.5, lane: 6, type: 'tap' },
-        
-        // Verse 1 - 16th notes
-        { time: 3.0, lane: 3, type: 'tap' },
-        { time: 3.25, lane: 2, type: 'tap' },
-        { time: 3.5, lane: 4, type: 'tap' },
-        { time: 3.75, lane: 3, type: 'tap' },
-        { time: 4.0, lane: 1, type: 'tap' },
-        { time: 4.25, lane: 5, type: 'tap' },
-        { time: 4.5, lane: 0, type: 'tap' },
-        { time: 4.75, lane: 6, type: 'tap' },
-        
-        // Chorus - Double notes
-        { time: 5.5, lane: 0, type: 'tap' },
-        { time: 5.5, lane: 6, type: 'tap' },
-        { time: 6.0, lane: 1, type: 'tap' },
-        { time: 6.0, lane: 5, type: 'tap' },
-        { time: 6.5, lane: 2, type: 'tap' },
-        { time: 6.5, lane: 4, type: 'tap' },
-        { time: 7.0, lane: 3, type: 'tap' },
-        
-        // Fast run
-        { time: 8.0, lane: 0, type: 'tap' },
-        { time: 8.125, lane: 1, type: 'tap' },
-        { time: 8.25, lane: 2, type: 'tap' },
-        { time: 8.375, lane: 3, type: 'tap' },
-        { time: 8.5, lane: 4, type: 'tap' },
-        { time: 8.625, lane: 5, type: 'tap' },
-        { time: 8.75, lane: 6, type: 'tap' },
-        { time: 9.0, lane: 6, type: 'tap' },
-        { time: 9.125, lane: 5, type: 'tap' },
-        { time: 9.25, lane: 4, type: 'tap' },
-        { time: 9.375, lane: 3, type: 'tap' },
-        { time: 9.5, lane: 2, type: 'tap' },
-        { time: 9.625, lane: 1, type: 'tap' },
-        { time: 9.75, lane: 0, type: 'tap' },
-        
-        // More chorus
-        { time: 10.5, lane: 0, type: 'tap' },
-        { time: 10.5, lane: 6, type: 'tap' },
-        { time: 11.0, lane: 1, type: 'tap' },
-        { time: 11.0, lane: 5, type: 'tap' },
-        { time: 11.5, lane: 2, type: 'tap' },
-        { time: 11.5, lane: 4, type: 'tap' },
-        { time: 12.0, lane: 3, type: 'tap' },
-        { time: 12.0, lane: 3, type: 'tap' },
-        
-        // Trill pattern
-        { time: 13.0, lane: 0, type: 'tap' },
-        { time: 13.25, lane: 1, type: 'tap' },
-        { time: 13.5, lane: 2, type: 'tap' },
-        { time: 13.75, lane: 3, type: 'tap' },
-        { time: 14.0, lane: 4, type: 'tap' },
-        { time: 14.25, lane: 5, type: 'tap' },
-        { time: 14.5, lane: 6, type: 'tap' },
-        { time: 14.75, lane: 5, type: 'tap' },
-        { time: 15.0, lane: 4, type: 'tap' },
-        { time: 15.25, lane: 3, type: 'tap' },
-        { time: 15.5, lane: 2, type: 'tap' },
-        { time: 15.75, lane: 1, type: 'tap' },
-        { time: 16.0, lane: 0, type: 'tap' },
-        
-        // Finale
-        { time: 17.0, lane: 0, type: 'tap' },
-        { time: 17.0, lane: 6, type: 'tap' },
-        { time: 17.5, lane: 1, type: 'tap' },
-        { time: 17.5, lane: 5, type: 'tap' },
-        { time: 18.0, lane: 2, type: 'tap' },
-        { time: 18.0, lane: 4, type: 'tap' },
-        { time: 18.5, lane: 3, type: 'tap' },
-        { time: 19.0, lane: 0, type: 'tap' },
-        { time: 19.0, lane: 6, type: 'tap' },
-        { time: 19.5, lane: 1, type: 'tap' },
-        { time: 19.5, lane: 5, type: 'tap' },
-        { time: 20.0, lane: 2, type: 'tap' },
-        { time: 20.0, lane: 4, type: 'tap' },
-        { time: 20.5, lane: 3, type: 'tap' }
-    ]
-};
-
-// Canon Rock Beatmap (160 BPM)
-const CANON_ROCK_BEATMAP = {
-    songId: 'canon-rock',
-    bpm: 160,
-    offset: 0.5,
-    duration: 180,
-    notes: []
-};
-
-// Generate Canon Rock notes
-for (let i = 0; i < 120; i++) {
-    const time = i * 0.375;
-    const lane = i % LANE_COUNT;
-    CANON_ROCK_BEATMAP.notes.push({ time, lane, type: 'tap' });
+function generateBeatmapFromBPM(bpm, durationSeconds = 90) {
+    const notes = [];
+    const beatInterval = 60 / bpm; // Time between beats in seconds
     
-    // Add double notes occasionally
-    if (i % 8 === 4) {
-        CANON_ROCK_BEATMAP.notes.push({ time, lane: LANE_COUNT - 1 - lane, type: 'tap' });
-    }
-}
-
-// Electro Classic Beatmap
-const ELECTRO_BEATMAP = {
-    songId: 'electro-classic',
-    bpm: 128,
-    offset: 0.5,
-    duration: 150,
-    notes: []
-};
-
-for (let i = 0; i < 80; i++) {
-    ELECTRO_BEATMAP.notes.push({ time: i * 0.5, lane: i % LANE_COUNT, type: 'tap' });
-}
-
-// ============================================
-// Beatmap Loader
-// ============================================
-
-async function loadBeatmap(songId) {
-    try {
-        if (songId === 'fly-mag-pie') return FLY_MAG_PIE_BEATMAP;
-        if (songId === 'canon-rock') return CANON_ROCK_BEATMAP;
-        if (songId === 'electro-classic') return ELECTRO_BEATMAP;
+    // Calculate total beats
+    const totalBeats = Math.floor(durationSeconds / beatInterval);
+    
+    // Patterns for more interesting gameplay
+    const patterns = [
+        [3], // Center only
+        [0, 6], // Left and right edges
+        [1, 5], // Inner edges
+        [2, 4], // Inner middle
+        [0, 3, 6], // Triple
+        [0, 2, 4, 6], // Spread
+        [1, 3, 5], // Pattern
+        [0, 1, 5, 6], // Outer pattern
+        [2, 3, 4], // Center cluster
+        [0, 2, 5, 6] // Mixed
+    ];
+    
+    for (let beat = 0; beat < totalBeats; beat++) {
+        const time = beat * beatInterval + 0.5; // Start after 0.5 sec
         
-        const response = await fetch(`songs/${songId}/beatmap.json`);
-        if (!response.ok) throw new Error('Beatmap not found');
-        return await response.json();
-    } catch (error) {
-        console.error('Error loading beatmap, using default:', error);
-        return { notes: [], bpm: 120, offset: 0.5, duration: 60 };
+        // Determine pattern based on beat position
+        let lanesToAdd = [];
+        
+        if (beat % 16 < 4) {
+            // Basic quarter notes
+            lanesToAdd = [beat % LANE_COUNT];
+        } else if (beat % 16 < 8) {
+            // Eighth notes pattern
+            const patternIndex = beat % patterns.length;
+            lanesToAdd = patterns[patternIndex];
+        } else if (beat % 16 < 12) {
+            // Double notes
+            const lane1 = beat % LANE_COUNT;
+            const lane2 = LANE_COUNT - 1 - lane1;
+            lanesToAdd = [lane1, lane2];
+        } else {
+            // Complex patterns for chorus
+            const patternIndex = Math.floor(beat / 4) % patterns.length;
+            lanesToAdd = patterns[patternIndex];
+        }
+        
+        // Add the notes
+        lanesToAdd.forEach(lane => {
+            if (lane >= 0 && lane < LANE_COUNT) {
+                notes.push({
+                    time: time,
+                    lane: lane,
+                    type: 'tap'
+                });
+            }
+        });
+        
+        // Add some 16th notes occasionally
+        if (beat % 8 === 4 && beat < totalBeats - 1) {
+            const nextTime = time + beatInterval / 2;
+            const extraLane = (beat + 1) % LANE_COUNT;
+            notes.push({
+                time: nextTime,
+                lane: extraLane,
+                type: 'tap'
+            });
+        }
     }
+    
+    console.log(`Generated ${notes.length} notes for ${bpm} BPM song`);
+    return {
+        notes: notes,
+        bpm: bpm,
+        offset: 0.5,
+        duration: durationSeconds
+    };
 }
 
 // ============================================
@@ -310,16 +243,19 @@ function displaySongs() {
 async function selectSong(song) {
     console.log('Selecting song:', song.title);
     
-    const beatmap = await loadBeatmap(song.id);
-    currentBeatmap = beatmap;
     currentSong = song;
     
-    notes = currentBeatmap.notes.map(note => ({
+    // Auto-generate beatmap based on BPM
+    const beatmap = generateBeatmapFromBPM(song.bpm, 90);
+    
+    notes = beatmap.notes.map(note => ({
         ...note,
         y: 0,
         hit: false,
         judged: false
     }));
+    
+    console.log(`Loaded ${notes.length} notes for ${song.title}`);
     
     songSelection.style.display = 'none';
     gameSection.style.display = 'block';
@@ -347,7 +283,7 @@ async function initAudio() {
 }
 
 async function loadAndPlaySong() {
-    if (!currentSong) return;
+    if (!currentSong) return null;
     
     try {
         if (audioSource) {
@@ -356,6 +292,7 @@ async function loadAndPlaySong() {
         
         const audioCtx = await initAudio();
         
+        // Try loading MP3
         let audioUrl = currentSong.audioUrl;
         let response = await fetch(audioUrl);
         
@@ -365,13 +302,15 @@ async function loadAndPlaySong() {
         }
         
         if (!response.ok) {
-            console.warn('Audio file not found, playing without sound');
-            startTime = performance.now() / 1000 + 0.1;
+            console.warn('Audio file not found, playing with visual only');
+            startTime = performance.now() / 1000 + 0.5;
+            songDuration = 90;
             return startTime;
         }
         
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        songDuration = audioBuffer.duration;
         
         audioSource = audioCtx.createBufferSource();
         audioSource.buffer = audioBuffer;
@@ -380,10 +319,13 @@ async function loadAndPlaySong() {
         startTime = audioCtx.currentTime + 0.1;
         audioSource.start(startTime);
         
+        console.log(`Audio loaded: ${audioBuffer.duration} seconds`);
         return startTime;
+        
     } catch (error) {
         console.error('Error loading audio:', error);
-        startTime = performance.now() / 1000 + 0.1;
+        startTime = performance.now() / 1000 + 0.5;
+        songDuration = 90;
         return startTime;
     }
 }
@@ -393,6 +335,7 @@ async function loadAndPlaySong() {
 // ============================================
 
 async function startSong() {
+    // Reset game state
     score = 0;
     combo = 0;
     maxCombo = 0;
@@ -401,6 +344,7 @@ async function startSong() {
     gameActive = true;
     gameStarted = false;
     
+    // Reset UI
     if (scoreSpan) scoreSpan.textContent = '0';
     if (comboSpan) comboSpan.textContent = '0';
     if (maxComboSpan) maxComboSpan.textContent = '0';
@@ -408,18 +352,22 @@ async function startSong() {
     if (comboIndicator) comboIndicator.textContent = '';
     if (judgmentDiv) judgmentDiv.textContent = '';
     
+    // Reset notes positions
     notes.forEach(note => {
         note.hit = false;
         note.judged = false;
         note.y = 0;
     });
     
+    // Load and play audio
     await loadAndPlaySong();
     
+    // Start animation loop
     if (animationId) cancelAnimationFrame(animationId);
     lastTimestamp = performance.now() / 1000;
     animationId = requestAnimationFrame(updateGame);
     
+    // Game starts after a short delay
     setTimeout(() => {
         gameStarted = true;
         console.log('Game started!');
@@ -434,13 +382,23 @@ function updateGame(timestamp) {
     lastTimestamp = currentTime;
     
     let songTime = currentTime - startTime;
-    if (!gameStarted && songTime > 0) gameStarted = true;
+    if (!gameStarted && songTime > 0.2) {
+        gameStarted = true;
+    }
     
-    updateNotePositions(deltaTime);
-    checkMissedNotes(songTime);
+    if (gameStarted) {
+        // Update note positions based on song time
+        updateNotePositions(songTime, deltaTime);
+        
+        // Check for missed notes
+        checkMissedNotes(songTime);
+    }
+    
+    // Draw everything
     drawGame(songTime);
     
-    if (gameStarted && songTime > (currentBeatmap?.duration || 90) + 3) {
+    // Check if song ended
+    if (gameStarted && songTime > songDuration + 3) {
         endSong();
         return;
     }
@@ -448,18 +406,23 @@ function updateGame(timestamp) {
     animationId = requestAnimationFrame(updateGame);
 }
 
-function updateNotePositions(deltaTime) {
-    const scrollDelta = SCROLL_SPEED * deltaTime;
+function updateNotePositions(songTime, deltaTime) {
+    // Calculate note positions based on their target time
     notes.forEach(note => {
         if (!note.hit && !note.judged) {
-            note.y += scrollDelta;
+            const timeUntilHit = note.time - songTime;
+            // Position: starts from top (y=0) when timeUntilHit = ~1.5 seconds
+            // Reaches hit zone when timeUntilHit = 0
+            const yPosition = (1.5 - timeUntilHit) * SCROLL_SPEED;
+            note.y = yPosition;
         }
     });
 }
 
 function checkMissedNotes(songTime) {
     notes.forEach(note => {
-        if (!note.hit && !note.judged && note.y > HIT_Y + 60) {
+        if (!note.hit && !note.judged && note.time + 0.2 < songTime) {
+            // Note passed the hit time without being hit
             note.judged = true;
             judgmentStats.miss++;
             judgmentStats.total++;
@@ -479,17 +442,18 @@ function handleTap(lane) {
     let closestNote = null;
     let closestDistance = Infinity;
     
+    // Find the closest unjudged note in this lane
     notes.forEach(note => {
         if (!note.judged && !note.hit && note.lane === lane) {
             const distance = Math.abs(songTime - note.time);
-            if (distance < closestDistance) {
+            if (distance < closestDistance && distance <= JUDGMENT_WINDOWS.good) {
                 closestDistance = distance;
                 closestNote = note;
             }
         }
     });
     
-    if (closestNote && closestDistance <= JUDGMENT_WINDOWS.good) {
+    if (closestNote) {
         let judgment = 'miss';
         let points = 0;
         
@@ -526,10 +490,6 @@ function handleTap(lane) {
             
             if (score > highScore) saveHighScore();
         }
-    } else if (closestDistance > JUDGMENT_WINDOWS.good) {
-        combo = 0;
-        updateUI();
-        showJudgment('miss', 0);
     }
 }
 
@@ -540,6 +500,9 @@ function updateUI() {
     
     if (comboIndicator) {
         comboIndicator.textContent = combo >= 10 ? `${combo} COMBO! 🔥` : '';
+        if (combo >= 50) comboIndicator.style.color = '#ffd700';
+        else if (combo >= 25) comboIndicator.style.color = '#ff6b6b';
+        else comboIndicator.style.color = '#00dfff';
     }
     
     const total = judgmentStats.perfect + judgmentStats.great + judgmentStats.good;
@@ -571,75 +534,108 @@ function drawGame(songTime) {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw lane backgrounds
+    // Draw background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0a0a1a');
+    gradient.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw lanes
     for (let i = 0; i < LANE_COUNT; i++) {
-        ctx.fillStyle = `rgba(0, 0, 0, 0.3)`;
-        ctx.fillRect(i * LANE_WIDTH, 0, LANE_WIDTH, canvas.height);
-        
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.lineWidth = 1;
         ctx.strokeRect(i * LANE_WIDTH, 0, LANE_WIDTH, canvas.height);
-    }
-    
-    // Draw lane labels
-    const labels = ['S', 'D', 'F', '␣', 'J', 'K', 'L'];
-    for (let i = 0; i < LANE_COUNT; i++) {
+        
+        // Lane number indicator
         ctx.fillStyle = LANE_COLORS[i];
-        ctx.font = 'bold 20px Poppins';
+        ctx.font = 'bold 18px Poppins';
         ctx.textAlign = 'center';
-        ctx.fillText(labels[i], i * LANE_WIDTH + LANE_WIDTH / 2, canvas.height - 20);
+        ctx.fillText(LANE_LABELS[i], i * LANE_WIDTH + LANE_WIDTH / 2, canvas.height - 15);
     }
     
-    // Draw hit zone
-    ctx.fillStyle = 'rgba(210, 145, 223, 0.1)';
-    ctx.fillRect(0, HIT_Y - 35, canvas.width, 70);
+    // Draw hit zone with glow
+    ctx.fillStyle = 'rgba(210, 145, 223, 0.15)';
+    ctx.fillRect(0, HIT_Y - 40, canvas.width, 80);
+    
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#d600d6';
     ctx.strokeStyle = '#d600d6';
     ctx.lineWidth = 3;
-    ctx.strokeRect(0, HIT_Y - 35, canvas.width, 70);
+    ctx.strokeRect(0, HIT_Y - 40, canvas.width, 80);
+    
+    ctx.shadowBlur = 0;
     
     // Draw notes
+    let visibleNotes = 0;
     notes.forEach(note => {
-        if (!note.hit && note.y < canvas.height + 80 && note.y > -80) {
+        if (!note.hit && note.y < canvas.height + 100 && note.y > -100) {
+            visibleNotes++;
             const x = note.lane * LANE_WIDTH + LANE_WIDTH / 2;
             const y = note.y;
             
-            ctx.shadowBlur = 12;
+            // Note glow effect
+            ctx.shadowBlur = 8;
             ctx.shadowColor = LANE_COLORS[note.lane];
             
-            const gradient = ctx.createLinearGradient(x - 18, y - 12, x + 18, y + 12);
+            // Draw note body
+            const gradient = ctx.createLinearGradient(x - 20, y - 15, x + 20, y + 15);
             gradient.addColorStop(0, LANE_COLORS[note.lane]);
             gradient.addColorStop(1, '#ffffff');
             
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.roundRect(x - 18, y - 12, 36, 24, 6);
+            ctx.roundRect(x - 20, y - 15, 40, 30, 8);
             ctx.fill();
             
+            // Note border
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.roundRect(x - 18, y - 12, 36, 24, 6);
+            ctx.roundRect(x - 20, y - 15, 40, 30, 8);
             ctx.stroke();
             
+            // Note label
             ctx.fillStyle = 'white';
             ctx.font = 'bold 16px Poppins';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(labels[note.lane], x, y);
+            ctx.fillText(LANE_LABELS[note.lane], x, y);
             
             ctx.shadowBlur = 0;
         }
     });
     
-    // Draw beat line
+    // Draw beat line that moves with the music
     const beatPhase = (songTime * (currentSong?.bpm || 120) / 60) % 1;
-    const lineY = HIT_Y - 35 - beatPhase * 80;
+    const lineY = HIT_Y - 40 - beatPhase * 150;
+    
     ctx.beginPath();
     ctx.moveTo(0, lineY);
     ctx.lineTo(canvas.width, lineY);
     ctx.strokeStyle = '#ffd700';
     ctx.lineWidth = 2;
     ctx.stroke();
+    
+    // Draw score on canvas
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 24px Poppins';
+    ctx.textAlign = 'right';
+    ctx.fillText(`Score: ${Math.floor(score)}`, canvas.width - 20, 50);
+    
+    ctx.font = '18px Poppins';
+    ctx.fillStyle = '#00dfff';
+    ctx.fillText(`Combo: ${combo}x`, canvas.width - 20, 90);
+    
+    if (maxCombo > 0) {
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`Max: ${maxCombo}`, canvas.width - 20, 120);
+    }
+    
+    // Show note count
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '12px Poppins';
+    ctx.fillText(`Notes: ${notes.length}`, canvas.width - 20, 150);
 }
 
 // Helper for rounded rectangles
@@ -667,8 +663,9 @@ function endSong() {
     const total = judgmentStats.perfect + judgmentStats.great + judgmentStats.good;
     const totalPoints = (judgmentStats.perfect * 100) + (judgmentStats.great * 50) + (judgmentStats.good * 25);
     const accuracy = total > 0 ? (totalPoints / (total * 100)) * 100 : 0;
+    const grade = accuracy >= 95 ? 'SS' : accuracy >= 90 ? 'S' : accuracy >= 80 ? 'A' : accuracy >= 70 ? 'B' : 'C';
     
-    alert(`🎵 Song Complete!\n\nScore: ${Math.floor(score)}\nMax Combo: ${maxCombo}x\nAccuracy: ${Math.floor(accuracy)}%\n\nPerfect: ${judgmentStats.perfect}\nGreat: ${judgmentStats.great}\nGood: ${judgmentStats.good}\nMiss: ${judgmentStats.miss}`);
+    alert(`🎵 Song Complete!\n\nGrade: ${grade}\nScore: ${Math.floor(score)}\nMax Combo: ${maxCombo}x\nAccuracy: ${Math.floor(accuracy)}%\n\nPerfect: ${judgmentStats.perfect}\nGreat: ${judgmentStats.great}\nGood: ${judgmentStats.good}\nMiss: ${judgmentStats.miss}`);
     
     exitToSongSelection();
 }
@@ -692,21 +689,11 @@ function resetCurrentSong() {
     if (audioSource) {
         try { audioSource.stop(); } catch(e) {}
     }
-    
-    if (currentBeatmap) {
-        notes = currentBeatmap.notes.map(note => ({
-            ...note,
-            y: 0,
-            hit: false,
-            judged: false
-        }));
-    }
-    
     startSong();
 }
 
 // ============================================
-// Authentication (simplified from previous)
+// Authentication
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -780,7 +767,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const lane = parseInt(btn.dataset.lane);
             handleTap(lane);
             btn.classList.add('active');
-            setTimeout(() => btn.classList.remove('active'), 80);
+            setTimeout(() => btn.classList.remove('active'), 100);
+        });
+        
+        // Touch support for mobile
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const lane = parseInt(btn.dataset.lane);
+            handleTap(lane);
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 100);
         });
     });
 });
@@ -819,12 +815,13 @@ async function saveHighScore() {
             score: Math.floor(score),
             date: new Date().toISOString()
         });
+        console.log('New high score saved!');
     }
 }
 
 // Keyboard support
 document.addEventListener('keydown', (e) => {
-    if (LANE_KEYS[e.code] !== undefined && gameSection?.style.display === 'block' && gameActive) {
+    if (LANE_KEYS[e.code] !== undefined && gameSection?.style.display === 'block' && gameActive && gameStarted) {
         e.preventDefault();
         const lane = LANE_KEYS[e.code];
         handleTap(lane);
@@ -832,9 +829,10 @@ document.addEventListener('keydown', (e) => {
         const btn = document.querySelector(`.tap-btn[data-lane="${lane}"]`);
         if (btn) {
             btn.classList.add('active');
-            setTimeout(() => btn.classList.remove('active'), 80);
+            setTimeout(() => btn.classList.remove('active'), 100);
         }
     }
 });
 
 console.log('O2Jam 7-Key Game loaded! Controls: S D F SPACE J K L');
+console.log('Notes are auto-generated based on BPM!');
