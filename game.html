@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Rhythm-Board | Play Game</title>
+    <title>Rhythm-Board | O2Jam Style Rhythm Game</title>
     <style>
         * {
             margin: 0;
@@ -22,7 +22,7 @@
         }
 
         .game-wrapper {
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
         }
 
@@ -115,12 +115,99 @@
             margin-top: 10px;
         }
 
+        /* Song Selection Screen */
+        .song-selection {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .song-selection h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #3820ab;
+        }
+
+        .songs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .song-card {
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .song-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: #d600d6;
+        }
+
+        .song-cover {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #3820ab, #d600d6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .song-info {
+            padding: 15px;
+        }
+
+        .song-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #3820ab;
+            margin-bottom: 5px;
+        }
+
+        .song-artist {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .song-difficulty {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #d600d6;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.75rem;
+        }
+
+        .back-to-songs {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #3820ab;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
         /* Game Section */
         .game-section {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.85);
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: none;
         }
 
         .game-header {
@@ -129,7 +216,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -138,14 +225,14 @@
             display: flex;
             gap: 15px;
             align-items: center;
+            color: white;
         }
 
         .user-email {
-            color: #3820ab;
             font-weight: 600;
         }
 
-        .logout-btn {
+        .logout-btn, .exit-song-btn {
             padding: 5px 15px;
             background: #ff4444;
             color: white;
@@ -156,8 +243,8 @@
             font-weight: 600;
         }
 
-        .logout-btn:hover {
-            background: #cc0000;
+        .exit-song-btn {
+            background: #ff8800;
         }
 
         .score-board {
@@ -165,23 +252,24 @@
             gap: 20px;
             font-size: 1.2rem;
             font-weight: bold;
+            color: white;
         }
 
         .score-board div {
             background: linear-gradient(135deg, #3820ab, #d600d6);
             padding: 5px 15px;
             border-radius: 20px;
-            color: white;
         }
 
         .game-canvas {
             display: block;
             margin: 0 auto;
-            background: #1a1a2e;
+            background: #0a0a1a;
             border-radius: 10px;
             width: 100%;
             height: auto;
             cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 223, 255, 0.3);
         }
 
         .tap-area {
@@ -203,12 +291,14 @@
             cursor: pointer;
             transition: transform 0.1s, background 0.1s;
             font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .tap-btn:active {
+        .tap-btn:active, .tap-btn.active {
             transform: scale(0.95);
             background: #00dfff;
             color: #3820ab;
+            box-shadow: 0 0 20px #00dfff;
         }
 
         .judgment {
@@ -219,10 +309,22 @@
             height: 70px;
         }
 
-        .judgment.perfect { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
-        .judgment.great { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        .judgment.perfect { color: #ffd700; text-shadow: 0 0 10px #ffd700; animation: pop 0.3s ease; }
+        .judgment.great { color: #00ff00; text-shadow: 0 0 10px #00ff00; animation: pop 0.3s ease; }
         .judgment.good { color: #87ceeb; text-shadow: 0 0 10px #87ceeb; }
         .judgment.miss { color: #ff4444; text-shadow: 0 0 10px #ff4444; }
+
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .combo-indicator {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #00dfff;
+            margin-top: 10px;
+        }
 
         .game-controls {
             display: flex;
@@ -244,6 +346,13 @@
 
         .game-btn:hover {
             background: #3820ab;
+        }
+
+        .song-info-display {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 600px) {
@@ -307,21 +416,37 @@
         </div>
     </div>
     
+    <!-- Song Selection Screen -->
+    <div id="song-selection" class="song-selection" style="display: none;">
+        <h2>🎵 SELECT A SONG</h2>
+        <div id="songs-grid" class="songs-grid">
+            <!-- Songs will be loaded dynamically -->
+        </div>
+        <div class="user-info" style="justify-content: center; margin-top: 20px;">
+            <span id="song-selection-email" style="color: #3820ab;"></span>
+            <button id="logout-from-songs" class="logout-btn" style="background: #ff4444;">Logout</button>
+        </div>
+    </div>
+    
     <!-- Game Section -->
-    <div id="game-section" class="game-section" style="display: none;">
+    <div id="game-section" class="game-section">
         <div class="game-header">
             <div class="user-info">
                 <span class="user-email" id="user-email"></span>
+                <button id="exit-song-btn" class="exit-song-btn">⬅ Exit Song</button>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
             <div class="score-board">
                 <div>Score: <span id="score">0</span></div>
                 <div>Combo: <span id="combo">0</span>x</div>
                 <div>Best: <span id="high-score">0</span></div>
+                <div>Accuracy: <span id="accuracy">0</span>%</div>
             </div>
         </div>
         
-        <canvas id="game-canvas" class="game-canvas" width="800" height="400"></canvas>
+        <div class="song-info-display" id="song-info-display"></div>
+        
+        <canvas id="game-canvas" class="game-canvas" width="1000" height="500"></canvas>
         
         <div class="tap-area">
             <button class="tap-btn" data-lane="0">←</button>
@@ -331,10 +456,11 @@
         </div>
         
         <div class="game-controls">
-            <button id="restart-btn" class="game-btn">🔄 Restart</button>
+            <button id="restart-btn" class="game-btn">🔄 Restart Song</button>
         </div>
         
         <div id="judgment" class="judgment"></div>
+        <div class="combo-indicator" id="combo-indicator"></div>
     </div>
 </div>
 
