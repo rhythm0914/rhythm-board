@@ -549,22 +549,22 @@ body {
 /* Responsive leaderboard */
 @media (max-width: 600px) {
     .leaderboard-header {
-        grid-template-columns: 45px 1fr 70px 60px;
-        font-size: 0.7rem;
+        grid-template-columns: 50px 1fr 70px 60px;
+        font-size: 0.75rem;
         padding: 10px 12px;
     }
     
     .leaderboard-entry {
-        grid-template-columns: 45px 1fr 70px 60px;
+        grid-template-columns: 50px 1fr 70px 60px;
         padding: 8px 12px;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 450px) {
     .leaderboard-header {
         grid-template-columns: 40px 1fr 60px 50px;
-        font-size: 0.65rem;
+        font-size: 0.7rem;
     }
     
     .leaderboard-entry {
