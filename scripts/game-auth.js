@@ -1,22 +1,10 @@
-// Import Firebase modules
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, addDoc, collection } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
+// ============================================
+// GAME AUTHENTICATION WITH LOCALSTORAGE
+// Integrated with leaderboard-system.js
+// ============================================
 
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyBh6zf8BxTnJx4AOKPCm-VvgZplVhn9LRI",
-    authDomain: "rhythm-board.firebaseapp.com",
-    projectId: "rhythm-board",
-    storageBucket: "rhythm-board.firebasestorage.app",
-    messagingSenderId: "987190217216",
-    appId: "1:987190217216:web:ea39da422b290dbf3626e5"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Import the leaderboard system (loaded from global)
+// The leaderboard-system.js should be loaded before this
 
 let currentUser = null;
 let gameScoreSaved = false;
@@ -34,6 +22,22 @@ const guestGameBtn = document.getElementById('guestGameBtn');
 const authTabs = document.querySelectorAll('.auth-tab');
 const authForms = document.querySelectorAll('.auth-form');
 
+// Wait for leaderboard system to be ready
+function waitForLeaderboard() {
+    return new Promise((resolve) => {
+        if (window.leaderboardSystem) {
+            resolve(window.leaderboardSystem);
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.leaderboardSystem) {
+                    clearInterval(checkInterval);
+                    resolve(window.leaderboardSystem);
+                }
+            }, 100);
+        }
+    });
+}
+
 // Show auth modal
 function showAuthModal() {
     if (authModal) authModal.classList.add('active');
@@ -47,6 +51,26 @@ function hideAuthModal() {
     if (signupError) signupError.textContent = '';
     if (loginForm) loginForm.reset();
     if (signupForm) signupForm.reset();
+}
+
+// Update UI based on auth state
+function updateAuthUI() {
+    if (currentUser) {
+        if (userBar) {
+            userBar.style.display = 'flex';
+            userEmailSpan.textContent = currentUser.username || currentUser.email.split('@')[0];
+        }
+        if (showAuthBtn) showAuthBtn.style.display = 'none';
+        
+        const startBtn = document.querySelector('.btn--start');
+        if (startBtn) startBtn.style.pointerEvents = 'auto';
+    } else {
+        if (userBar) userBar.style.display = 'none';
+        if (showAuthBtn) showAuthBtn.style.display = 'block';
+        
+        const startBtn = document.querySelector('.btn--start');
+        if (startBtn) startBtn.style.pointerEvents = 'auto';
+    }
 }
 
 // Tab switching
@@ -72,11 +96,13 @@ if (loginForm) {
         const errorDiv = document.getElementById('loginError');
         
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            if (errorDiv) errorDiv.textContent = '';
+            const user = await window.leaderboardSystem.login(email, password);
+            currentUser = user;
+            errorDiv.textContent = '';
             hideAuthModal();
+            updateAuthUI();
         } catch (error) {
-            if (errorDiv) errorDiv.textContent = 'Login failed: ' + error.message;
+            errorDiv.textContent = 'Login failed: ' + error.message;
         }
     });
 }
@@ -90,21 +116,18 @@ if (signupForm) {
         const errorDiv = document.getElementById('signupError');
         
         if (password.length < 6) {
-            if (errorDiv) errorDiv.textContent = 'Password must be at least 6 characters';
+            errorDiv.textContent = 'Password must be at least 6 characters';
             return;
         }
         
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await setDoc(doc(db, 'users', userCredential.user.uid), {
-                email: email,
-                highScore: 0,
-                createdAt: new Date().toISOString()
-            });
-            if (errorDiv) errorDiv.textContent = '';
+            const user = await window.leaderboardSystem.signUp(email, password);
+            currentUser = user;
+            errorDiv.textContent = '';
             hideAuthModal();
+            updateAuthUI();
         } catch (error) {
-            if (errorDiv) errorDiv.textContent = 'Signup failed: ' + error.message;
+            errorDiv.textContent = 'Signup failed: ' + error.message;
         }
     });
 }
@@ -112,7 +135,10 @@ if (signupForm) {
 // Logout
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        await signOut(auth);
+        window.leaderboardSystem.logout();
+        currentUser = null;
+        gameScoreSaved = false;
+        updateAuthUI();
     });
 }
 
@@ -140,36 +166,15 @@ if (authModal) {
     });
 }
 
-// Auth state listener
-onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    
-    if (user) {
-        if (userBar) {
-            userBar.style.display = 'flex';
-            userEmailSpan.textContent = user.email.split('@')[0];
-        }
-        if (showAuthBtn) showAuthBtn.style.display = 'none';
-        
-        const startBtn = document.querySelector('.btn--start');
-        if (startBtn) startBtn.style.pointerEvents = 'auto';
-        
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-            const highScore = userDoc.data().highScore || 0;
-            console.log('User high score:', highScore);
-        }
-    } else {
-        if (userBar) userBar.style.display = 'none';
-        if (showAuthBtn) showAuthBtn.style.display = 'block';
-        
-        const startBtn = document.querySelector('.btn--start');
-        if (startBtn) startBtn.style.pointerEvents = 'auto';
-    }
-});
+// Initialize auth state
+async function initAuth() {
+    await waitForLeaderboard();
+    currentUser = window.leaderboardSystem.getCurrentUserInfo();
+    updateAuthUI();
+}
 
-// Export functions to window for script.js to use
-window.saveScoreToLeaderboard = async function(score) {
+// Save score to leaderboard (called from script.js)
+window.saveScoreToLeaderboard = async function(score, hits) {
     if (!currentUser) {
         console.log('Guest play - score not saved to leaderboard');
         return false;
@@ -178,26 +183,31 @@ window.saveScoreToLeaderboard = async function(score) {
     if (gameScoreSaved) return false;
     
     try {
-        await addDoc(collection(db, 'leaderboard'), {
-            userId: currentUser.uid,
-            email: currentUser.email,
-            score: Math.floor(score),
-            date: new Date().toISOString()
-        });
-        
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        const currentHighScore = userDoc.exists() ? (userDoc.data().highScore || 0) : 0;
-        
-        if (score > currentHighScore) {
-            await setDoc(doc(db, 'users', currentUser.uid), {
-                email: currentUser.email,
-                highScore: Math.floor(score),
-                lastPlayed: new Date().toISOString()
-            }, { merge: true });
+        const saved = window.leaderboardSystem.saveScore(score, hits);
+        if (saved) {
+            gameScoreSaved = true;
+            console.log('Score saved to leaderboard:', Math.floor(score));
+            
+            // Show success message
+            const summaryResult = document.querySelector('.summary__result');
+            if (summaryResult) {
+                const scoreSavedMsg = document.createElement('div');
+                scoreSavedMsg.className = 'score-saved-message';
+                scoreSavedMsg.innerHTML = '✅ Score saved to leaderboard!';
+                scoreSavedMsg.style.cssText = `
+                    position: absolute;
+                    bottom: -40px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    font-size: 0.8rem;
+                    color: #00e5b5;
+                    animation: fadeUp 0.5s ease;
+                `;
+                summaryResult.appendChild(scoreSavedMsg);
+                setTimeout(() => scoreSavedMsg.remove(), 3000);
+            }
         }
-        
-        gameScoreSaved = true;
-        console.log('Score saved to leaderboard:', Math.floor(score));
         return true;
     } catch (error) {
         console.error('Error saving score:', error);
@@ -213,4 +223,7 @@ window.getCurrentUser = function() {
     return currentUser;
 };
 
-console.log('Firebase Auth initialized for Rhythm Game!');
+// Start initialization
+initAuth();
+
+console.log('Game Auth initialized with localStorage leaderboard!');

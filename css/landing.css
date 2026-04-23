@@ -489,9 +489,10 @@ body {
     margin: 0 auto;
 }
 
+/* Leaderboard 4-column layout */
 .leaderboard-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 80px;
     padding: 15px 20px;
     background: rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid var(--color-purple-light);
@@ -500,11 +501,12 @@ body {
 }
 
 .leaderboard-entry {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 80px;
     padding: 12px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: all var(--transition-fast);
+    align-items: center;
 }
 
 .leaderboard-entry:hover {
@@ -515,6 +517,52 @@ body {
 .rank {
     font-weight: 800;
     color: var(--color-purple-light);
+}
+
+/* Responsive leaderboard */
+@media (max-width: 600px) {
+    .leaderboard-header {
+        grid-template-columns: 50px 1fr 70px 60px;
+        font-size: 0.75rem;
+        padding: 10px 12px;
+    }
+    
+    .leaderboard-entry {
+        grid-template-columns: 50px 1fr 70px 60px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 450px) {
+    .leaderboard-header {
+        grid-template-columns: 40px 1fr 60px 50px;
+        font-size: 0.7rem;
+    }
+    
+    .leaderboard-entry {
+        grid-template-columns: 40px 1fr 60px 50px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Score saved message animation */
+@keyframes fadeUp {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
 }
 
 .leaderboard-cta {

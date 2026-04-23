@@ -62,7 +62,7 @@
                     <div class="stat-label">Precision</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-number" id="playerCount">10K+</div>
+                    <div class="stat-number" id="playerCount">Loading...</div>
                     <div class="stat-label">Players</div>
                 </div>
             </div>
@@ -157,23 +157,22 @@
     </section>
 
     <section id="leaderboard" class="leaderboard-preview">
-        <h2 class="section-title">Top Players</h2>
+        <h2 class="section-title">🏆 Global Leaderboard</h2>
         <div class="leaderboard-card">
             <div class="leaderboard-header">
                 <span>Rank</span>
                 <span>Player</span>
                 <span>Score</span>
+                <span>Date</span>
             </div>
             <div class="leaderboard-body" id="leaderboardBody">
                 <div class="leaderboard-entry">
-                    <span class="rank">#1</span>
-                    <span>🎵 Loading...</span>
-                    <span>---</span>
+                    <span colspan="4" style="text-align: center; grid-column: span 3;">Loading leaderboard...</span>
                 </div>
             </div>
         </div>
         <div class="leaderboard-cta">
-            <p>⭐ Sign in and play to see your name on the real leaderboard!</p>
+            <p>⭐ <strong>Sign up and login</strong> to save your scores and appear on the leaderboard!</p>
         </div>
     </section>
 
@@ -245,7 +244,7 @@
             <p class="auth-error" id="signupError"></p>
         </form>
         <div class="auth-guest">
-            <p>or continue as guest</p>
+            <p>or continue as guest (scores won't be saved)</p>
             <button id="guestBtn" class="guest-btn">Play as Guest</button>
         </div>
     </div>

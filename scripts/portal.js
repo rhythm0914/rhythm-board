@@ -151,6 +151,8 @@ function preloadGameAssets() {
     const assets = [
         'css/style.css',
         'scripts/song.js',
+        'js/leaderboard-system.js',  // Add this
+        'js/game-auth.js',            // Add this
         'scripts/script.js',
         'media/music.mp3'
     ];
