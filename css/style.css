@@ -1035,3 +1035,4 @@ h2 {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
   border-radius: 10px;
+}
