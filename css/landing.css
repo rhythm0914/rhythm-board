@@ -9,6 +9,8 @@
     --color-purple-light: #d291df;
     --color-mint: #a2dcda;
     --color-white: #ffffff;
+    --primary-blue: #4361ee;
+    --primary-red: #e63946;
     --transition-fast: 0.3s ease;
     --transition-slow: 0.6s ease;
 }
@@ -162,6 +164,25 @@ body {
 
 .play-btn-nav:hover::after {
     width: 0;
+}
+
+/* Sign In Button in Navigation */
+.btn-auth {
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+    border: none;
+    padding: 10px 28px;
+    border-radius: 50px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.btn-auth:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(67, 97, 238, 0.4);
 }
 
 .mobile-menu-btn {
@@ -485,7 +506,7 @@ body {
     backdrop-filter: blur(10px);
     border-radius: 20px;
     overflow: hidden;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
 }
 
@@ -519,6 +540,12 @@ body {
     color: var(--color-purple-light);
 }
 
+.leaderboard-cta {
+    text-align: center;
+    margin-top: 30px;
+    opacity: 0.7;
+}
+
 /* Responsive leaderboard */
 @media (max-width: 600px) {
     .leaderboard-header {
@@ -544,31 +571,6 @@ body {
         grid-template-columns: 40px 1fr 60px 50px;
         font-size: 0.7rem;
     }
-}
-
-/* Score saved message animation */
-@keyframes fadeUp {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    20% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-
-.leaderboard-cta {
-    text-align: center;
-    margin-top: 30px;
-    opacity: 0.7;
 }
 
 /* ============================================
@@ -718,6 +720,11 @@ body {
     border: none;
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.9);
+    color: #333;
+}
+
+.auth-form input::placeholder {
+    color: #999;
 }
 
 .auth-submit {
@@ -847,6 +854,25 @@ body {
 .feature-card.revealed, .step.revealed, .leaderboard-card.revealed {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Score saved message animation */
+@keyframes fadeUp {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-25px);
+    }
 }
 
 /* ============================================

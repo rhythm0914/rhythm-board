@@ -187,12 +187,16 @@ async function loadLeaderboard() {
         leaderboardBody.innerHTML = leaderboardHTML;
         
         // Update player count
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersRef);
-        const playerCountSpan = document.getElementById('playerCount');
-        if (playerCountSpan) {
-            const totalPlayers = usersSnapshot.size;
-            playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : (totalPlayers || '100+');
+        try {
+            const usersRef = collection(db, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            const playerCountSpan = document.getElementById('playerCount');
+            if (playerCountSpan) {
+                const totalPlayers = usersSnapshot.size;
+                playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : (totalPlayers || '100+');
+            }
+        } catch (e) {
+            console.log('Could not get player count');
         }
         
         console.log('Leaderboard loaded with', querySnapshot.size, 'entries');
@@ -231,11 +235,11 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// AUTH MODAL (Using Firebase Auth via redirect)
+// AUTH MODAL - FIXED VERSION
 // ============================================
 
+// Get elements - using correct selectors
 const authModal = document.getElementById('authModal');
-const showAuthBtn = document.getElementById('showAuthBtn');
 const authModalClose = document.getElementById('authModalClose');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
@@ -243,8 +247,23 @@ const guestBtn = document.getElementById('guestGameBtn');
 const authTabs = document.querySelectorAll('.auth-tab');
 const authForms = document.querySelectorAll('.auth-form');
 
+// IMPORTANT: Get the Sign In button from the navigation
+// The button in the navigation has class "btn-auth" and id "showAuthBtn"
+const showAuthBtn = document.getElementById('showAuthBtn');
+
+console.log('Auth elements found:', { 
+    authModal: !!authModal, 
+    showAuthBtn: !!showAuthBtn,
+    guestBtn: !!guestBtn 
+});
+
 function showAuthModalFunc() {
-    if (authModal) authModal.classList.add('active');
+    if (authModal) {
+        authModal.classList.add('active');
+        console.log('Auth modal shown');
+    } else {
+        console.error('Auth modal element not found!');
+    }
 }
 
 function hideAuthModalFunc() {
@@ -271,7 +290,7 @@ if (authTabs.length) {
     });
 }
 
-// Login - redirect to game.html after login
+// Login - redirect to game.html
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -279,18 +298,16 @@ if (loginForm) {
         const password = document.getElementById('loginPassword').value;
         const errorDiv = document.getElementById('loginError');
         
-        // Store credentials temporarily for game.html to use
+        // Store credentials temporarily
         sessionStorage.setItem('tempLoginEmail', email);
         sessionStorage.setItem('tempLoginPassword', password);
         
         errorDiv.textContent = 'Redirecting to login...';
-        
-        // Redirect to game.html which will handle the actual Firebase login
         window.location.href = 'game.html?action=login';
     });
 }
 
-// Signup - redirect to game.html after signup
+// Signup - redirect to game.html
 if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -304,14 +321,12 @@ if (signupForm) {
             return;
         }
         
-        // Store credentials temporarily for game.html to use
+        // Store credentials temporarily
         sessionStorage.setItem('tempSignupUsername', username);
         sessionStorage.setItem('tempSignupEmail', email);
         sessionStorage.setItem('tempSignupPassword', password);
         
         errorDiv.textContent = 'Redirecting to create account...';
-        
-        // Redirect to game.html which will handle the actual Firebase signup
         window.location.href = 'game.html?action=signup';
     });
 }
@@ -324,8 +339,38 @@ if (guestBtn) {
     });
 }
 
+// Show auth modal when Sign In button is clicked
 if (showAuthBtn) {
     showAuthBtn.addEventListener('click', showAuthModalFunc);
+    console.log('Sign In button listener attached');
+    
+    // Make the button visible (it's hidden by default)
+    showAuthBtn.style.display = 'inline-block';
+    showAuthBtn.style.background = 'linear-gradient(135deg, var(--primary-blue), var(--primary-red))';
+    showAuthBtn.style.border = 'none';
+    showAuthBtn.style.padding = '10px 28px';
+    showAuthBtn.style.borderRadius = '50px';
+    showAuthBtn.style.color = 'white';
+    showAuthBtn.style.fontWeight = '600';
+    showAuthBtn.style.cursor = 'pointer';
+    showAuthBtn.style.fontSize = '0.9rem';
+    
+    // Add to the auth-buttons container or navigation
+    const authButtonsContainer = document.querySelector('.auth-buttons');
+    if (authButtonsContainer) {
+        authButtonsContainer.appendChild(showAuthBtn);
+    } else {
+        // If auth-buttons doesn't exist, add to nav-links
+        const navLinksContainer = document.querySelector('.nav-links');
+        if (navLinksContainer) {
+            const playBtn = document.querySelector('.play-btn-nav');
+            if (playBtn) {
+                navLinksContainer.insertBefore(showAuthBtn, playBtn);
+            } else {
+                navLinksContainer.appendChild(showAuthBtn);
+            }
+        }
+    }
 }
 
 if (authModalClose) {
