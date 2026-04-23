@@ -208,10 +208,16 @@ var showResult = function () {
     resultDisplay.style.opacity = 1;
   }
   
-  // Save score to Firebase leaderboard if user is logged in
-  if (typeof saveScoreToLeaderboard !== 'undefined') {
-    saveScoreToLeaderboard(score);
-  }
+// In showResult function, replace the save call with:
+if (typeof saveScoreToLeaderboard !== 'undefined') {
+    saveScoreToLeaderboard(score, {
+        perfect: hits.perfect,
+        good: hits.good,
+        bad: hits.bad,
+        miss: hits.miss,
+        maxCombo: maxCombo
+    });
+}
   
   var actionButtons = document.querySelector('.action-buttons');
   if (actionButtons) {

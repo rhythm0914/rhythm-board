@@ -1,12 +1,10 @@
 // ============================================
-// GAME AUTHENTICATION WITH LOCALSTORAGE
-// Integrated with leaderboard-system.js
+// GAME AUTHENTICATION WITH FIREBASE
+// Integrated with firebase-leaderboard.js
 // ============================================
 
-// Import the leaderboard system (loaded from global)
-// The leaderboard-system.js should be loaded before this
+import './firebase-leaderboard.js';
 
-let currentUser = null;
 let gameScoreSaved = false;
 
 // DOM Elements
@@ -21,22 +19,6 @@ const signupForm = document.getElementById('signupForm');
 const guestGameBtn = document.getElementById('guestGameBtn');
 const authTabs = document.querySelectorAll('.auth-tab');
 const authForms = document.querySelectorAll('.auth-form');
-
-// Wait for leaderboard system to be ready
-function waitForLeaderboard() {
-    return new Promise((resolve) => {
-        if (window.leaderboardSystem) {
-            resolve(window.leaderboardSystem);
-        } else {
-            const checkInterval = setInterval(() => {
-                if (window.leaderboardSystem) {
-                    clearInterval(checkInterval);
-                    resolve(window.leaderboardSystem);
-                }
-            }, 100);
-        }
-    });
-}
 
 // Show auth modal
 function showAuthModal() {
@@ -54,16 +36,38 @@ function hideAuthModal() {
 }
 
 // Update UI based on auth state
-function updateAuthUI() {
-    if (currentUser) {
+async function updateAuthUI() {
+    const user = await window.firebaseLeaderboard.getCurrentUser();
+    
+    if (user) {
         if (userBar) {
             userBar.style.display = 'flex';
-            userEmailSpan.textContent = currentUser.username || currentUser.email.split('@')[0];
+            userEmailSpan.textContent = user.username;
         }
         if (showAuthBtn) showAuthBtn.style.display = 'none';
         
         const startBtn = document.querySelector('.btn--start');
         if (startBtn) startBtn.style.pointerEvents = 'auto';
+        
+        // Show welcome message
+        const welcomeMsg = document.createElement('div');
+        welcomeMsg.innerHTML = `🎵 Welcome ${user.username}! Your scores will be saved to leaderboard. 🎵`;
+        welcomeMsg.style.cssText = `
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: linear-gradient(135deg, #00e5b5, #00b894);
+            color: #1a1a2e;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            animation: fadeUp 0.5s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(welcomeMsg);
+        setTimeout(() => welcomeMsg.remove(), 4000);
     } else {
         if (userBar) userBar.style.display = 'none';
         if (showAuthBtn) showAuthBtn.style.display = 'block';
@@ -95,14 +99,16 @@ if (loginForm) {
         const password = document.getElementById('loginPassword').value;
         const errorDiv = document.getElementById('loginError');
         
-        try {
-            const user = await window.leaderboardSystem.login(email, password);
-            currentUser = user;
+        errorDiv.textContent = 'Logging in...';
+        
+        const result = await window.firebaseLeaderboard.login(email, password);
+        
+        if (result.success) {
             errorDiv.textContent = '';
             hideAuthModal();
-            updateAuthUI();
-        } catch (error) {
-            errorDiv.textContent = 'Login failed: ' + error.message;
+            await updateAuthUI();
+        } else {
+            errorDiv.textContent = 'Login failed: ' + result.error;
         }
     });
 }
@@ -113,6 +119,7 @@ if (signupForm) {
         e.preventDefault();
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
+        const username = email.split('@')[0];
         const errorDiv = document.getElementById('signupError');
         
         if (password.length < 6) {
@@ -120,14 +127,16 @@ if (signupForm) {
             return;
         }
         
-        try {
-            const user = await window.leaderboardSystem.signUp(email, password);
-            currentUser = user;
+        errorDiv.textContent = 'Creating account...';
+        
+        const result = await window.firebaseLeaderboard.signUp(email, password, username);
+        
+        if (result.success) {
             errorDiv.textContent = '';
             hideAuthModal();
-            updateAuthUI();
-        } catch (error) {
-            errorDiv.textContent = 'Signup failed: ' + error.message;
+            await updateAuthUI();
+        } else {
+            errorDiv.textContent = 'Signup failed: ' + result.error;
         }
     });
 }
@@ -135,10 +144,9 @@ if (signupForm) {
 // Logout
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        window.leaderboardSystem.logout();
-        currentUser = null;
+        await window.firebaseLeaderboard.logout();
         gameScoreSaved = false;
-        updateAuthUI();
+        await updateAuthUI();
     });
 }
 
@@ -159,23 +167,17 @@ if (authModalClose) {
     authModalClose.addEventListener('click', hideAuthModal);
 }
 
-// Close modal on outside click
 if (authModal) {
     authModal.addEventListener('click', (e) => {
         if (e.target === authModal) hideAuthModal();
     });
 }
 
-// Initialize auth state
-async function initAuth() {
-    await waitForLeaderboard();
-    currentUser = window.leaderboardSystem.getCurrentUserInfo();
-    updateAuthUI();
-}
-
-// Save score to leaderboard (called from script.js)
-window.saveScoreToLeaderboard = async function(score, hits) {
-    if (!currentUser) {
+// Save score to Firebase leaderboard (called from script.js)
+window.saveScoreToLeaderboard = async function(score, gameStats) {
+    const user = await window.firebaseLeaderboard.getCurrentUser();
+    
+    if (!user) {
         console.log('Guest play - score not saved to leaderboard');
         return false;
     }
@@ -183,32 +185,37 @@ window.saveScoreToLeaderboard = async function(score, hits) {
     if (gameScoreSaved) return false;
     
     try {
-        const saved = window.leaderboardSystem.saveScore(score, hits);
-        if (saved) {
+        const result = await window.firebaseLeaderboard.saveScore(score, gameStats);
+        
+        if (result.success) {
             gameScoreSaved = true;
-            console.log('Score saved to leaderboard:', Math.floor(score));
+            console.log('Score saved to Firebase leaderboard:', Math.floor(score));
             
             // Show success message
             const summaryResult = document.querySelector('.summary__result');
             if (summaryResult) {
+                const message = result.isHighScore ? 
+                    '🏆 NEW HIGH SCORE! Saved to leaderboard! 🏆' : 
+                    '✅ Score saved to leaderboard!';
+                
                 const scoreSavedMsg = document.createElement('div');
-                scoreSavedMsg.className = 'score-saved-message';
-                scoreSavedMsg.innerHTML = '✅ Score saved to leaderboard!';
+                scoreSavedMsg.innerHTML = message;
                 scoreSavedMsg.style.cssText = `
                     position: absolute;
-                    bottom: -40px;
+                    bottom: -50px;
                     left: 0;
                     right: 0;
                     text-align: center;
-                    font-size: 0.8rem;
+                    font-size: 0.85rem;
                     color: #00e5b5;
+                    font-weight: 500;
                     animation: fadeUp 0.5s ease;
                 `;
                 summaryResult.appendChild(scoreSavedMsg);
-                setTimeout(() => scoreSavedMsg.remove(), 3000);
+                setTimeout(() => scoreSavedMsg.remove(), 4000);
             }
         }
-        return true;
+        return result.success;
     } catch (error) {
         console.error('Error saving score:', error);
         return false;
@@ -219,11 +226,11 @@ window.resetScoreSavedFlag = function() {
     gameScoreSaved = false;
 };
 
-window.getCurrentUser = function() {
-    return currentUser;
+window.getCurrentUser = async function() {
+    return await window.firebaseLeaderboard.getCurrentUser();
 };
 
-// Start initialization
-initAuth();
+// Initialize
+updateAuthUI();
 
-console.log('Game Auth initialized with localStorage leaderboard!');
+console.log('Game Auth initialized with Firebase!');

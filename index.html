@@ -167,7 +167,7 @@
             </div>
             <div class="leaderboard-body" id="leaderboardBody">
                 <div class="leaderboard-entry">
-                    <span colspan="4" style="text-align: center; grid-column: span 3;">Loading leaderboard...</span>
+                    <span colspan="4" style="text-align: center; grid-column: span 4;">Loading leaderboard...</span>
                 </div>
             </div>
         </div>
@@ -238,6 +238,7 @@
             <p class="auth-error" id="loginError"></p>
         </form>
         <form id="signupForm" class="auth-form">
+            <input type="text" id="signupUsername" placeholder="Username (optional)" autocomplete="off">
             <input type="email" id="signupEmail" placeholder="Email" required>
             <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" required>
             <button type="submit" class="auth-submit">Create Account</button>
@@ -245,7 +246,7 @@
         </form>
         <div class="auth-guest">
             <p>or continue as guest (scores won't be saved)</p>
-            <button id="guestBtn" class="guest-btn">Play as Guest</button>
+            <button id="guestGameBtn" class="guest-btn">Play as Guest</button>
         </div>
     </div>
 </div>

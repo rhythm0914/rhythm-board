@@ -1,8 +1,8 @@
-// Import leaderboard system
+// Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
 import { getFirestore, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
-// Firebase Configuration (keep for backward compatibility)
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBh6zf8BxTnJx4AOKPCm-VvgZplVhn9LRI",
     authDomain: "rhythm-board.firebaseapp.com",
@@ -25,191 +25,13 @@ const tapDemoBtns = document.querySelectorAll('.tap-demo-btn');
 const leaderboardBody = document.getElementById('leaderboardBody');
 
 // ============================================
-// LEADERBOARD - Load from localStorage first, then Firebase
-// ============================================
-
-async function loadLeaderboard() {
-    if (!leaderboardBody) return;
-    
-    console.log('Loading leaderboard...');
-    
-    // First, load from localStorage (our main leaderboard system)
-    const localScores = getLocalLeaderboard();
-    
-    if (localScores.length > 0) {
-        displayLeaderboard(localScores);
-        updatePlayerCount(localScores);
-    } else {
-        leaderboardBody.innerHTML = `
-            <div class="leaderboard-entry">
-                <span colspan="4" style="text-align: center; grid-column: span 3;">No scores yet! Be the first to play! 🎵</span>
-            </div>
-        `;
-    }
-    
-    // Also try to load from Firebase (optional, for cross-device sync)
-    try {
-        const firebaseScores = await loadFirebaseLeaderboard();
-        if (firebaseScores.length > 0) {
-            // Merge scores
-            const mergedScores = mergeScores(localScores, firebaseScores);
-            displayLeaderboard(mergedScores);
-        }
-    } catch (error) {
-        console.log('Firebase leaderboard not available, using local only');
-    }
-}
-
-function getLocalLeaderboard() {
-    if (typeof window.leaderboardSystem !== 'undefined') {
-        return window.leaderboardSystem.getLeaderboard(20);
-    }
-    
-    // Fallback to localStorage directly
-    const scores = localStorage.getItem('rhythm_scores');
-    if (!scores) return [];
-    
-    const parsedScores = JSON.parse(scores);
-    return parsedScores
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 20)
-        .map((entry, index) => ({
-            rank: index + 1,
-            username: entry.username,
-            score: entry.score,
-            date: formatDate(entry.date)
-        }));
-}
-
-async function loadFirebaseLeaderboard() {
-    try {
-        const leaderboardRef = collection(db, 'leaderboard');
-        const q = query(leaderboardRef, orderBy('score', 'desc'), limit(20));
-        const querySnapshot = await getDocs(q);
-        
-        const scores = [];
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            scores.push({
-                username: data.email ? data.email.split('@')[0] : 'Player',
-                score: data.score,
-                date: formatDate(data.date),
-                timestamp: new Date(data.date).getTime()
-            });
-        });
-        return scores;
-    } catch (error) {
-        console.error('Error loading Firebase leaderboard:', error);
-        return [];
-    }
-}
-
-function mergeScores(localScores, firebaseScores) {
-    const allScores = [...localScores, ...firebaseScores];
-    const uniqueScores = new Map();
-    
-    allScores.forEach(score => {
-        const key = `${score.username}_${score.score}`;
-        if (!uniqueScores.has(key) || uniqueScores.get(key).timestamp < score.timestamp) {
-            uniqueScores.set(key, score);
-        }
-    });
-    
-    return Array.from(uniqueScores.values())
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 20)
-        .map((score, index) => ({
-            ...score,
-            rank: index + 1
-        }));
-}
-
-function displayLeaderboard(scores) {
-    if (!leaderboardBody) return;
-    
-    if (scores.length === 0) {
-        leaderboardBody.innerHTML = `
-            <div class="leaderboard-entry">
-                <span colspan="4" style="text-align: center; grid-column: span 3;">No scores yet! Be the first to play! 🎵</span>
-            </div>
-        `;
-        return;
-    }
-    
-    let leaderboardHTML = '';
-    
-    scores.forEach((entry) => {
-        let rankDisplay = `#${entry.rank}`;
-        let rankEmoji = '';
-        
-        if (entry.rank === 1) {
-            rankDisplay = '#1';
-            rankEmoji = '🏆 ';
-        } else if (entry.rank === 2) {
-            rankDisplay = '#2';
-            rankEmoji = '🥈 ';
-        } else if (entry.rank === 3) {
-            rankDisplay = '#3';
-            rankEmoji = '🥉 ';
-        }
-        
-        const scoreFormatted = entry.score.toLocaleString();
-        
-        leaderboardHTML += `
-            <div class="leaderboard-entry">
-                <span class="rank">${rankDisplay}</span>
-                <span>${rankEmoji}${escapeHtml(entry.username)}</span>
-                <span>${scoreFormatted}</span>
-                <span style="font-size: 0.75rem; opacity: 0.7;">${entry.date || 'Today'}</span>
-            </div>
-        `;
-    });
-    
-    leaderboardBody.innerHTML = leaderboardHTML;
-}
-
-function updatePlayerCount(scores) {
-    const playerCountSpan = document.getElementById('playerCount');
-    if (!playerCountSpan) return;
-    
-    const uniquePlayers = new Set(scores.map(s => s.username));
-    const count = uniquePlayers.size;
-    
-    if (count >= 1000) {
-        playerCountSpan.textContent = Math.floor(count / 1000) + 'K+';
-    } else if (count === 0) {
-        playerCountSpan.textContent = '10K+';
-    } else {
-        playerCountSpan.textContent = count;
-    }
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'Today';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-    return date.toLocaleDateString();
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ============================================
 // CREATE FLOATING PARTICLES
 // ============================================
 
 function createParticles() {
     if (!particlesContainer) return;
     
+    particlesContainer.innerHTML = '';
     const particleCount = window.innerWidth < 768 ? 30 : 50;
     
     for (let i = 0; i < particleCount; i++) {
@@ -231,7 +53,7 @@ function createParticles() {
 // PREVIEW CANVAS ANIMATION
 // ============================================
 
-let previewState = { lanes: [false, false, false, false, false, false, false] };
+let previewLanes = [false, false, false, false, false, false, false];
 
 function initPreviewCanvas() {
     if (!previewCanvas) return;
@@ -250,12 +72,11 @@ function initPreviewCanvas() {
         
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         
-        // Draw lanes
         for (let i = 0; i < 7; i++) {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.strokeRect(i * laneWidth, 0, laneWidth, previewCanvas.height);
             
-            if (previewState.lanes[i]) {
+            if (previewLanes[i]) {
                 ctx.fillStyle = `rgba(0, 223, 255, 0.3)`;
                 ctx.fillRect(i * laneWidth, 0, laneWidth, previewCanvas.height);
             }
@@ -266,7 +87,6 @@ function initPreviewCanvas() {
             ctx.fillText(laneLabels[i], i * laneWidth + laneWidth / 2, previewCanvas.height - 15);
         }
         
-        // Draw moving beat line
         beat = (beat + 0.05) % 4;
         const lineY = previewCanvas.height - 80 - beat * 20;
         ctx.beginPath();
@@ -276,7 +96,6 @@ function initPreviewCanvas() {
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // Draw hit zone
         ctx.fillStyle = 'rgba(210, 145, 223, 0.15)';
         ctx.fillRect(0, previewCanvas.height - 80, previewCanvas.width, 60);
         
@@ -290,18 +109,12 @@ function initPreviewCanvas() {
     drawPreview();
 }
 
-// ============================================
-// DEMO TAP EFFECTS
-// ============================================
-
 function setupDemoTaps() {
     tapDemoBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const lane = parseInt(btn.dataset.demoLane);
-            if (previewState && previewState.lanes) {
-                previewState.lanes[lane] = true;
-                setTimeout(() => { previewState.lanes[lane] = false; }, 150);
-            }
+            previewLanes[lane] = true;
+            setTimeout(() => { previewLanes[lane] = false; }, 150);
             
             btn.style.transform = 'scale(0.9)';
             btn.style.background = '#00dfff';
@@ -317,7 +130,108 @@ function setupDemoTaps() {
 }
 
 // ============================================
-// AUTH MODAL (Using localStorage)
+// LEADERBOARD FROM FIREBASE
+// ============================================
+
+async function loadLeaderboard() {
+    if (!leaderboardBody) return;
+    
+    console.log('Loading leaderboard from Firebase...');
+    
+    leaderboardBody.innerHTML = `
+        <div class="leaderboard-entry">
+            <span colspan="4" style="text-align: center; grid-column: span 4;">Loading leaderboard...</span>
+        </div>
+    `;
+    
+    try {
+        const leaderboardRef = collection(db, 'leaderboard');
+        const q = query(leaderboardRef, orderBy('score', 'desc'), limit(20));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            leaderboardBody.innerHTML = `
+                <div class="leaderboard-entry">
+                    <span colspan="4" style="text-align: center; grid-column: span 4;">No scores yet! Sign up and be the first! 🎵</span>
+                </div>
+            `;
+            return;
+        }
+        
+        let leaderboardHTML = '';
+        let rank = 1;
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const playerName = data.username || (data.email ? data.email.split('@')[0] : 'Anonymous');
+            const score = data.score.toLocaleString();
+            const date = formatDate(data.date);
+            
+            let rankDisplay = `#${rank}`;
+            let rankEmoji = '';
+            if (rank === 1) { rankDisplay = '#1'; rankEmoji = '🏆 '; }
+            else if (rank === 2) { rankDisplay = '#2'; rankEmoji = '🥈 '; }
+            else if (rank === 3) { rankDisplay = '#3'; rankEmoji = '🥉 '; }
+            
+            leaderboardHTML += `
+                <div class="leaderboard-entry">
+                    <span class="rank">${rankDisplay}</span>
+                    <span>${rankEmoji}${escapeHtml(playerName)}</span>
+                    <span>${score}</span>
+                    <span style="font-size: 0.7rem; opacity: 0.7;">${date}</span>
+                </div>
+            `;
+            rank++;
+        });
+        
+        leaderboardBody.innerHTML = leaderboardHTML;
+        
+        // Update player count
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        const playerCountSpan = document.getElementById('playerCount');
+        if (playerCountSpan) {
+            const totalPlayers = usersSnapshot.size;
+            playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : (totalPlayers || '100+');
+        }
+        
+        console.log('Leaderboard loaded with', querySnapshot.size, 'entries');
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        leaderboardBody.innerHTML = `
+            <div class="leaderboard-entry">
+                <span colspan="4" style="text-align: center; grid-column: span 4; color: #ff6b6b;">Unable to load leaderboard. Please refresh.</span>
+            </div>
+        `;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Just now';
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays}d ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+        return date.toLocaleDateString();
+    } catch {
+        return 'Recently';
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return 'Anonymous';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
+// AUTH MODAL (Using Firebase Auth via redirect)
 // ============================================
 
 const authModal = document.getElementById('authModal');
@@ -325,7 +239,7 @@ const showAuthBtn = document.getElementById('showAuthBtn');
 const authModalClose = document.getElementById('authModalClose');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
-const guestBtn = document.getElementById('guestBtn');
+const guestBtn = document.getElementById('guestGameBtn');
 const authTabs = document.querySelectorAll('.auth-tab');
 const authForms = document.querySelectorAll('.auth-form');
 
@@ -357,7 +271,7 @@ if (authTabs.length) {
     });
 }
 
-// Login
+// Login - redirect to game.html after login
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -365,21 +279,22 @@ if (loginForm) {
         const password = document.getElementById('loginPassword').value;
         const errorDiv = document.getElementById('loginError');
         
-        try {
-            await window.leaderboardSystem.login(email, password);
-            errorDiv.textContent = '';
-            hideAuthModalFunc();
-            window.location.href = 'game.html';
-        } catch (error) {
-            errorDiv.textContent = 'Login failed: ' + error.message;
-        }
+        // Store credentials temporarily for game.html to use
+        sessionStorage.setItem('tempLoginEmail', email);
+        sessionStorage.setItem('tempLoginPassword', password);
+        
+        errorDiv.textContent = 'Redirecting to login...';
+        
+        // Redirect to game.html which will handle the actual Firebase login
+        window.location.href = 'game.html?action=login';
     });
 }
 
-// Signup
+// Signup - redirect to game.html after signup
 if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const username = document.getElementById('signupUsername')?.value || '';
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
         const errorDiv = document.getElementById('signupError');
@@ -389,14 +304,15 @@ if (signupForm) {
             return;
         }
         
-        try {
-            await window.leaderboardSystem.signUp(email, password);
-            errorDiv.textContent = '';
-            hideAuthModalFunc();
-            window.location.href = 'game.html';
-        } catch (error) {
-            errorDiv.textContent = 'Signup failed: ' + error.message;
-        }
+        // Store credentials temporarily for game.html to use
+        sessionStorage.setItem('tempSignupUsername', username);
+        sessionStorage.setItem('tempSignupEmail', email);
+        sessionStorage.setItem('tempSignupPassword', password);
+        
+        errorDiv.textContent = 'Redirecting to create account...';
+        
+        // Redirect to game.html which will handle the actual Firebase signup
+        window.location.href = 'game.html?action=signup';
     });
 }
 
@@ -493,10 +409,6 @@ function setupSmoothScroll() {
         });
     });
 }
-
-// ============================================
-// KEYBOARD SUPPORT FOR DEMO
-// ============================================
 
 function setupKeyboardDemo() {
     document.addEventListener('keydown', (e) => {
