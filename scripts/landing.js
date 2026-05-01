@@ -204,13 +204,10 @@ async function loadRealLeaderboard() {
     
     try {
         const leaderboardRef = collection(db, 'leaderboard');
-        const testSnapshot = await getDocs(leaderboardRef);
-        console.log('Leaderboard connection successful, total entries:', testSnapshot.size);
-        
         const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         
-        console.log('Ordered query successful, entries:', querySnapshot.size);
+        console.log('Leaderboard query successful, entries:', querySnapshot.size);
         
         if (querySnapshot.empty) {
             leaderboardBody.innerHTML = `
@@ -287,14 +284,17 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// GOOGLE SIGN-IN FOR LANDING PAGE
+// GOOGLE SIGN-IN FOR LANDING PAGE - FIXED
 // ============================================
 
-window.signInWithGoogle = async function() {
+async function signInWithGoogle() {
     try {
+        console.log('Starting Google Sign-In...');
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
+        console.log('Google sign-in successful:', user.email);
         
+        // Check if user document exists, if not create one
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (!userDoc.exists()) {
             await setDoc(doc(db, 'users', user.uid), {
@@ -302,18 +302,27 @@ window.signInWithGoogle = async function() {
                 highScore: 0,
                 createdAt: new Date().toISOString()
             });
+            console.log('Created user document for:', user.email);
         }
         
+        // Close modal
         const authModal = document.getElementById('authModal');
         if (authModal) authModal.classList.remove('active');
-        console.log('Google sign-in successful:', user.email);
+        
+        // Refresh leaderboard
         setTimeout(() => loadRealLeaderboard(), 500);
+        
     } catch (error) {
         console.error('Google sign-in error:', error);
         const errorDiv = document.getElementById('loginError');
-        if (errorDiv) errorDiv.textContent = 'Google sign-in failed: ' + error.message;
+        if (errorDiv) {
+            errorDiv.textContent = 'Google sign-in failed: ' + error.message;
+        }
     }
-};
+}
+
+// Make it globally available
+window.signInWithGoogle = signInWithGoogle;
 
 // ============================================
 // MOBILE MENU
@@ -397,20 +406,30 @@ function updateUIForUser(user) {
     if (user) {
         if (userBarTop) {
             userBarTop.style.display = 'flex';
-            if (userEmailTop) userEmailTop.textContent = user.email.split('@')[0];
+            if (userEmailTop) {
+                userEmailTop.textContent = user.email.split('@')[0];
+            }
         }
         const leaderboardCTA = document.getElementById('leaderboardCTA');
         if (leaderboardCTA) {
             leaderboardCTA.innerHTML = '<p>✅ <strong>You are signed in!</strong> Your scores will be saved to the leaderboard. <a href="game.html">Play now</a> to set a high score!</p>';
         }
-        if (showAuthBtn) showAuthBtn.style.display = 'none';
+        if (showAuthBtn) {
+            showAuthBtn.style.display = 'none';
+        }
+        console.log('User is signed in:', user.email);
     } else {
-        if (userBarTop) userBarTop.style.display = 'none';
+        if (userBarTop) {
+            userBarTop.style.display = 'none';
+        }
         const leaderboardCTA = document.getElementById('leaderboardCTA');
         if (leaderboardCTA) {
             leaderboardCTA.innerHTML = '<p>⭐ <strong>Sign in to save your scores</strong> and compete on the leaderboard! Guest players can still enjoy the full game, but scores won\'t be saved.</p>';
         }
-        if (showAuthBtn) showAuthBtn.style.display = 'inline-block';
+        if (showAuthBtn) {
+            showAuthBtn.style.display = 'inline-block';
+        }
+        console.log('No user signed in');
     }
 }
 
@@ -441,6 +460,11 @@ function setupAuthModal() {
 
     function showAuthModalFunc() {
         if (authModal) authModal.classList.add('active');
+        // Clear previous errors
+        const loginError = document.getElementById('loginError');
+        const signupError = document.getElementById('signupError');
+        if (loginError) loginError.textContent = '';
+        if (signupError) signupError.textContent = '';
     }
 
     if (showAuthBtn) {
@@ -459,7 +483,25 @@ function setupAuthModal() {
 
     // Google Sign-In button
     if (googleSignInBtn) {
-        googleSignInBtn.addEventListener('click', window.signInWithGoogle);
+        console.log('Google button found, attaching listener');
+        googleSignInBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signInWithGoogle();
+        });
+    } else {
+        console.log('Google button not found yet, will retry');
+        // Retry finding the button
+        const retryInterval = setInterval(() => {
+            const btn = document.getElementById('googleSignInBtn');
+            if (btn) {
+                console.log('Google button found on retry');
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    signInWithGoogle();
+                });
+                clearInterval(retryInterval);
+            }
+        }, 500);
     }
 
     if (authTabs.length) {
@@ -578,6 +620,7 @@ async function init() {
     console.log('Landing Page initialized with Google Sign-In! 🎵');
 }
 
+// Start initialization when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
