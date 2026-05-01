@@ -30,6 +30,8 @@ const userEmailTop = document.getElementById('userEmailTop');
 const logoutBtnTop = document.getElementById('logoutBtnTop');
 
 let currentUser = null;
+let leaderboardLoadTimeout = null;
+let isLoadingLeaderboard = false;
 
 // ============================================
 // CREATE FLOATING PARTICLES
@@ -142,31 +144,43 @@ function setupDemoTaps(previewState) {
 }
 
 // ============================================
-// LEADERBOARD FROM FIREBASE (REAL SCORES)
+// LEADERBOARD FROM FIREBASE (FIXED)
 // ============================================
 
 async function loadRealLeaderboard() {
-    if (!leaderboardBody) return;
+    // Prevent multiple simultaneous loads
+    if (isLoadingLeaderboard) {
+        console.log('Leaderboard already loading, skipping...');
+        return;
+    }
     
-    console.log('Loading real leaderboard from Firebase...');
+    if (!leaderboardBody) {
+        console.error('Leaderboard body element not found');
+        return;
+    }
     
-    leaderboardBody.innerHTML = `
-        <div class="leaderboard-entry">
-            <span colspan="3" style="text-align: center;">Loading leaderboard...</span>
-        </div>
-    `;
+    isLoadingLeaderboard = true;
+    console.log('Loading leaderboard at:', new Date().toLocaleTimeString());
+    
+    // Clear any existing timeout
+    if (leaderboardLoadTimeout) {
+        clearTimeout(leaderboardLoadTimeout);
+    }
     
     try {
         const leaderboardRef = collection(db, 'leaderboard');
         const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         
+        console.log('Leaderboard query successful, entries:', querySnapshot.size);
+        
         if (querySnapshot.empty) {
             leaderboardBody.innerHTML = `
                 <div class="leaderboard-entry">
-                    <span colspan="3" style="text-align: center;">No scores yet! Be the first to play! 🎵</span>
+                    <span colspan="3" style="text-align: center;">🎵 No scores yet! Be the first to play! 🎵</span>
                 </div>
             `;
+            isLoadingLeaderboard = false;
             return;
         }
         
@@ -176,7 +190,7 @@ async function loadRealLeaderboard() {
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const playerName = data.email ? data.email.split('@')[0] : 'Anonymous Player';
-            const score = data.score.toLocaleString();
+            const score = data.score ? data.score.toLocaleString() : '0';
             
             let rankDisplay = `#${rank}`;
             if (rank === 1) rankDisplay = '🏆 #1';
@@ -194,24 +208,39 @@ async function loadRealLeaderboard() {
         });
         
         leaderboardBody.innerHTML = leaderboardHTML;
-        console.log('Leaderboard loaded with', querySnapshot.size, 'entries');
+        console.log('Leaderboard displayed successfully');
         
-        // Update player count
-        const playerCountSpan = document.getElementById('playerCount');
-        if (playerCountSpan) {
-            const usersRef = collection(db, 'users');
-            const usersSnapshot = await getDocs(usersRef);
-            const totalPlayers = usersSnapshot.size;
-            playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : totalPlayers.toString();
+        // Update player count (don't let this fail the leaderboard)
+        try {
+            const playerCountSpan = document.getElementById('playerCount');
+            if (playerCountSpan) {
+                const usersRef = collection(db, 'users');
+                const usersSnapshot = await getDocs(usersRef);
+                const totalPlayers = usersSnapshot.size;
+                playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : totalPlayers.toString();
+            }
+        } catch (userError) {
+            console.warn('Could not load player count:', userError);
+            const playerCountSpan = document.getElementById('playerCount');
+            if (playerCountSpan) playerCountSpan.textContent = '100+';
         }
         
     } catch (error) {
-        console.error('Error loading leaderboard:', error);
+        console.error('Leaderboard error:', error.message);
+        
+        // Show user-friendly error but don't break the page
         leaderboardBody.innerHTML = `
             <div class="leaderboard-entry">
-                <span colspan="3" style="text-align: center; color: #ff4444;">Unable to load leaderboard. Please try again later.</span>
+                <span colspan="3" style="text-align: center; color: #ffaa44;">⚠️ Leaderboard temporarily unavailable. Please refresh the page.</span>
             </div>
         `;
+    } finally {
+        isLoadingLeaderboard = false;
+        
+        // Set timeout to prevent rapid successive calls
+        leaderboardLoadTimeout = setTimeout(() => {
+            leaderboardLoadTimeout = null;
+        }, 2000);
     }
 }
 
@@ -298,6 +327,8 @@ function setupSmoothScroll() {
 // ============================================
 
 function updateUIForUser(user) {
+    const showAuthBtn = document.getElementById('showAuthBtnLanding');
+    
     if (user) {
         if (userBarTop) {
             userBarTop.style.display = 'flex';
@@ -307,7 +338,6 @@ function updateUIForUser(user) {
         if (leaderboardCTA) {
             leaderboardCTA.innerHTML = '<p>✅ <strong>You are signed in!</strong> Your scores will be saved to the leaderboard. <a href="game.html">Play now</a> to set a high score!</p>';
         }
-        const showAuthBtn = document.getElementById('showAuthBtnLanding');
         if (showAuthBtn) showAuthBtn.style.display = 'none';
     } else {
         if (userBarTop) userBarTop.style.display = 'none';
@@ -315,7 +345,6 @@ function updateUIForUser(user) {
         if (leaderboardCTA) {
             leaderboardCTA.innerHTML = '<p>⭐ <strong>Sign in to save your scores</strong> and compete on the leaderboard! Guest players can still enjoy the full game, but scores won\'t be saved.</p>';
         }
-        const showAuthBtn = document.getElementById('showAuthBtnLanding');
         if (showAuthBtn) showAuthBtn.style.display = 'inline-block';
     }
 }
@@ -336,6 +365,12 @@ function setupAuthModal() {
 
     function hideAuthModal() {
         if (authModal) authModal.classList.remove('active');
+        const loginError = document.getElementById('loginError');
+        const signupError = document.getElementById('signupError');
+        if (loginError) loginError.textContent = '';
+        if (signupError) signupError.textContent = '';
+        if (loginForm) loginForm.reset();
+        if (signupForm) signupForm.reset();
     }
 
     function showAuthModalFunc() {
@@ -380,7 +415,7 @@ function setupAuthModal() {
                 await signInWithEmailAndPassword(auth, email, password);
                 if (errorDiv) errorDiv.textContent = '';
                 hideAuthModal();
-                await loadRealLeaderboard();
+                setTimeout(() => loadRealLeaderboard(), 500);
             } catch (error) {
                 if (errorDiv) errorDiv.textContent = 'Login failed: ' + error.message;
             }
@@ -408,7 +443,7 @@ function setupAuthModal() {
                 });
                 if (errorDiv) errorDiv.textContent = '';
                 hideAuthModal();
-                await loadRealLeaderboard();
+                setTimeout(() => loadRealLeaderboard(), 500);
             } catch (error) {
                 if (errorDiv) errorDiv.textContent = 'Signup failed: ' + error.message;
             }
@@ -430,7 +465,7 @@ function setupAuthModal() {
 if (logoutBtnTop) {
     logoutBtnTop.addEventListener('click', async () => {
         await signOut(auth);
-        await loadRealLeaderboard();
+        setTimeout(() => loadRealLeaderboard(), 500);
         updateUIForUser(null);
     });
 }
@@ -442,7 +477,8 @@ if (logoutBtnTop) {
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     updateUIForUser(user);
-    await loadRealLeaderboard();
+    // Small delay to ensure DOM is ready
+    setTimeout(() => loadRealLeaderboard(), 300);
 });
 
 // ============================================
@@ -460,13 +496,20 @@ async function init() {
     setupScrollReveal();
     setupAuthModal();
     
-    await loadRealLeaderboard();
+    // Initial leaderboard load with delay
+    setTimeout(() => loadRealLeaderboard(), 500);
     
-    setInterval(loadRealLeaderboard, 30000);
+    // Refresh leaderboard every 60 seconds (not 30 to avoid rate limits)
+    setInterval(() => {
+        if (!isLoadingLeaderboard) {
+            loadRealLeaderboard();
+        }
+    }, 60000);
     
     console.log('Landing Page initialized! 🎵');
 }
 
+// Start initialization when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
