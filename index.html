@@ -320,6 +320,24 @@
 <!-- Update the script to use landing.js as module -->
 <script type="module" src="scripts/landing.js"></script>
 <script>
+
+    // Device detection and redirect (optional)
+    (function() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isTablet = /iPad|Android(?!.*Mobile)/i.test(navigator.userAgent);
+        
+// Uncomment to enable auto-redirect
+if (isMobile && !isTablet && !window.location.pathname.includes('game-mobile.html')) {
+    const gameLinks = document.querySelectorAll('a[href="game.html"]');
+    gameLinks.forEach(link => {
+        link.href = 'game-mobile.html';
+    });
+}
+        
+        // Log device info
+        console.log('Device:', isMobile ? 'Mobile' : 'Desktop');
+    })();
+
     // Create floating particles
     (function createParticles() {
         const particlesContainer = document.getElementById('particles');

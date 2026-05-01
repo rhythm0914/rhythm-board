@@ -1,0 +1,235 @@
+/* mobile-optimized.css - Cross-platform responsive styles */
+
+/* ============================================
+   BASE RESPONSIVE SETTINGS
+   ============================================ */
+
+/* Desktop default styles */
+:root {
+    --key-size: 70px;
+    --track-height: 420px;
+    --font-size-base: 1.2rem;
+    --button-padding: 1.2rem;
+    --gap-size: 0.6rem;
+    --border-radius: 1.2rem;
+}
+
+/* Tablet styles */
+@media (max-width: 768px) and (min-width: 481px) {
+    :root {
+        --key-size: 60px;
+        --track-height: 380px;
+        --font-size-base: 1rem;
+        --button-padding: 1rem;
+        --gap-size: 0.5rem;
+        --border-radius: 1rem;
+    }
+}
+
+/* Mobile portrait */
+@media (max-width: 480px) and (orientation: portrait) {
+    :root {
+        --key-size: 50px;
+        --track-height: 320px;
+        --font-size-base: 0.85rem;
+        --button-padding: 0.8rem;
+        --gap-size: 0.4rem;
+        --border-radius: 0.8rem;
+    }
+    
+    /* Adjust game container */
+    .game {
+        padding: 0 5px;
+    }
+    
+    /* Smaller hit effects */
+    .hit__combo {
+        font-size: 3rem !important;
+    }
+    
+    .hit__accuracy {
+        font-size: 1.8rem !important;
+    }
+}
+
+/* Mobile landscape */
+@media (max-width: 850px) and (orientation: landscape) {
+    :root {
+        --key-size: 40px;
+        --track-height: 220px;
+        --font-size-base: 0.75rem;
+        --button-padding: 0.5rem;
+        --gap-size: 0.3rem;
+        --border-radius: 0.6rem;
+    }
+    
+    main {
+        min-height: 350px !important;
+    }
+    
+    .hit__combo {
+        font-size: 2.5rem !important;
+    }
+    
+    .track-container {
+        min-height: var(--track-height) !important;
+    }
+}
+
+/* ============================================
+   TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* Larger touch targets for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .key {
+        min-height: var(--key-size);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .key:active {
+        transform: translateY(3px);
+    }
+    
+    /* Increase button sizes for touch */
+    .btn, .action-btn, .pause-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Better spacing for touch */
+    .key-container {
+        gap: max(4px, var(--gap-size));
+        margin: 8px;
+    }
+    
+    /* Disable hover effects on touch */
+    .key:hover {
+        transform: none;
+    }
+    
+    .key__hit {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+}
+
+/* ============================================
+   LOW-END DEVICE OPTIMIZATIONS
+   ============================================ */
+
+/* Disable heavy animations on low-end devices */
+.low-end-device .note {
+    animation-timing-function: linear !important;
+    will-change: top !important;
+}
+
+.low-end-device .particle {
+    display: none !important;
+}
+
+.low-end-device .hit__combo,
+.low-end-device .hit__accuracy {
+    animation: none !important;
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* Use GPU acceleration */
+.note, .track, .key {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Reduce paint operations */
+.track-container {
+    will-change: transform;
+}
+
+/* Optimize for mobile */
+@media (max-width: 768px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Prevent text selection on buttons */
+    .key span, .btn span, .action-btn span {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    
+    /* Smoother scrolling */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ============================================
+   LANDSCAPE MODE SPECIFIC
+   ============================================ */
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .menu {
+        overflow-y: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .menu__config {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .btn--small {
+        width: 45px;
+        height: 45px;
+        line-height: 45px;
+        font-size: 1rem;
+    }
+    
+    .summary__result {
+        max-width: 280px;
+        padding: 15px;
+    }
+    
+    .result__accuracy {
+        padding: 5px 10px;
+        font-size: 1.2rem;
+    }
+}
+
+/* ============================================
+   HIGH DPI SCREENS
+   ============================================ */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .note {
+        border-width: 0.5px;
+    }
+    
+    .key span {
+        font-weight: 700;
+    }
+}
+
+/* ============================================
+   FOLDABLE DEVICES
+   ============================================ */
+
+@media (max-width: 280px) {
+    .key span {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.1rem;
+    }
+    
+    .key-container {
+        gap: 2px;
+    }
+    
+    .hit__combo {
+        font-size: 2rem !important;
+    }
+}
