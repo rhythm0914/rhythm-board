@@ -138,10 +138,32 @@
             padding: 20px;
             gap: 20px;
             overflow-y: auto;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .menu.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
         
         .menu h1 {
             font-size: 2.5rem;
+        }
+        
+        /* Settings Panel - Will hide when game starts */
+        .settings-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 200;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .settings-panel.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
         
         /* Bigger Buttons for Mobile */
@@ -189,6 +211,15 @@
             background: rgba(0, 0, 0, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .summary.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
         
         .summary__result {
@@ -206,16 +237,36 @@
             height: 100%;
             z-index: 120;
             border-radius: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .pause-overlay.visible {
+            opacity: 1;
+            visibility: visible;
         }
         
         .pause-title {
             font-size: 2.5rem;
+            color: white;
         }
         
         .pause-btn {
             padding: 14px 28px;
             font-size: 1.2rem;
             min-width: 120px;
+            margin: 5px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
         }
         
         /* Close/Back Button */
@@ -235,6 +286,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: opacity 0.3s ease;
+        }
+        
+        .mobile-close-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
         
         .mobile-close-btn:active {
@@ -254,6 +311,13 @@
             display: flex;
             gap: 8px;
             z-index: 200;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .speed-control-bar.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
         
         .speed-btn {
@@ -289,6 +353,13 @@
             gap: 8px;
             z-index: 200;
             align-items: center;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .challenge-toggle.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
         
         .challenge-toggle span {
@@ -324,6 +395,12 @@
             align-items: center;
             z-index: 200;
             font-size: 0.8rem;
+            transition: opacity 0.3s ease;
+        }
+        
+        .user-bar-mobile.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
         
         /* Touch Feedback */
@@ -369,17 +446,20 @@
         ✕ Close
     </div>
 
-    <!-- Speed Control Bar -->
-    <div class="speed-control-bar" id="speedControlBar">
-        <button class="speed-btn" data-speed="0">1x</button>
-        <button class="speed-btn" data-speed="1">2x</button>
-        <button class="speed-btn active" data-speed="2">3x</button>
-    </div>
+    <!-- Settings Panel Container -->
+    <div class="settings-panel" id="settingsPanel">
+        <!-- Speed Control Bar -->
+        <div class="speed-control-bar" id="speedControlBar">
+            <button class="speed-btn" data-speed="0">1x</button>
+            <button class="speed-btn" data-speed="1">2x</button>
+            <button class="speed-btn active" data-speed="2">3x</button>
+        </div>
 
-    <!-- Challenge Mode Toggle -->
-    <div class="challenge-toggle" id="challengeToggle">
-        <span>🎭 Fade Notes</span>
-        <button class="challenge-btn" id="challengeModeBtn">OFF</button>
+        <!-- Challenge Mode Toggle -->
+        <div class="challenge-toggle" id="challengeToggle">
+            <span>🎭 Fade Notes</span>
+            <button class="challenge-btn" id="challengeModeBtn">OFF</button>
+        </div>
     </div>
 
     <!-- User Info Bar Mobile -->
@@ -486,6 +566,16 @@
         </div>
     </div>
 
+    <!-- Pause Overlay -->
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-title">⏸ GAME PAUSED</div>
+        <div class="pause-buttons">
+            <button class="pause-btn pause-btn--resume" id="resumeBtn" style="background: #5f7cff;">▶ Resume</button>
+            <button class="pause-btn pause-btn--restart" id="pauseRestartBtn" style="background: #ffb347;">🔄 Restart</button>
+            <button class="pause-btn pause-btn--home" id="pauseHomeBtn" style="background: #ff4757;">🏠 Home</button>
+        </div>
+    </div>
+
     <!-- Load scripts -->
     <script src="scripts/song.js"></script>
     <script src="scripts/mobile-detector.js"></script>
@@ -495,6 +585,28 @@
     <script>
         // Mobile-specific UI controls
         (function() {
+            // Hide all settings when game starts
+            function hideGameSettings() {
+                const settingsPanel = document.getElementById('settingsPanel');
+                const closeBtn = document.getElementById('mobileCloseBtn');
+                const userBar = document.getElementById('userBar');
+                
+                if (settingsPanel) settingsPanel.classList.add('hidden');
+                if (closeBtn) closeBtn.classList.add('hidden');
+                if (userBar) userBar.classList.add('hidden');
+            }
+            
+            // Show settings when game returns to menu
+            function showGameSettings() {
+                const settingsPanel = document.getElementById('settingsPanel');
+                const closeBtn = document.getElementById('mobileCloseBtn');
+                const userBar = document.getElementById('userBar');
+                
+                if (settingsPanel) settingsPanel.classList.remove('hidden');
+                if (closeBtn) closeBtn.classList.remove('hidden');
+                if (userBar && window.currentUser) userBar.classList.remove('hidden');
+            }
+            
             // Close button handler
             const closeBtn = document.getElementById('mobileCloseBtn');
             if (closeBtn) {
@@ -505,9 +617,9 @@
             
             // Speed control handlers
             const speedBtns = document.querySelectorAll('.speed-btn');
-            let currentSpeed = 2; // Default 3x (index 2)
+            let currentSpeed = 2; // Default 3x
             
-            speedBtns.forEach((btn, idx) => {
+            speedBtns.forEach((btn) => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     speedBtns.forEach(b => b.classList.remove('active'));
@@ -515,9 +627,8 @@
                     currentSpeed = parseInt(this.dataset.speed);
                     
                     // Update game speed
-                    if (window.speed !== undefined) {
+                    if (typeof window.speed !== 'undefined') {
                         window.speed = currentSpeed;
-                        // Reinitialize notes with new speed
                         if (typeof initializeNotes === 'function') {
                             initializeNotes();
                         }
@@ -535,17 +646,18 @@
                     this.textContent = challengeEnabled ? 'ON' : 'OFF';
                     this.classList.toggle('active', challengeEnabled);
                     
-                    // Update game animation
-                    if (window.animation !== undefined) {
+                    // Update game animation - this will make notes fade out on miss
+                    if (typeof window.animation !== 'undefined') {
                         window.animation = challengeEnabled ? 'moveDownFade' : 'moveDown';
                         if (typeof initializeNotes === 'function') {
                             initializeNotes();
                         }
                     }
+                    console.log('Challenge mode:', challengeEnabled ? 'ON - Notes will fade' : 'OFF');
                 });
             }
             
-            // Start button handler - ensure it works on mobile
+            // Start button handler
             const startBtn = document.getElementById('startBtn');
             if (startBtn) {
                 startBtn.addEventListener('click', function(e) {
@@ -553,9 +665,10 @@
                     const menu = document.getElementById('menuOverlay');
                     if (menu) {
                         menu.classList.add('hidden');
-                        menu.style.opacity = '0';
-                        menu.style.pointerEvents = 'none';
                     }
+                    
+                    // Hide settings when game starts
+                    hideGameSettings();
                     
                     // Start the game
                     if (typeof startGame === 'function') {
@@ -575,10 +688,14 @@
                     if (typeof resetGame === 'function') {
                         resetGame();
                     }
+                    // Show settings again
+                    showGameSettings();
                     setTimeout(() => {
                         if (typeof startGame === 'function') {
                             startGame();
                         }
+                        // Hide settings again after game starts
+                        setTimeout(hideGameSettings, 100);
                     }, 150);
                 });
             }
@@ -591,10 +708,41 @@
                 });
             }
             
+            // Pause overlay handlers
+            const resumeBtn = document.getElementById('resumeBtn');
+            const pauseRestartBtn = document.getElementById('pauseRestartBtn');
+            const pauseHomeBtn = document.getElementById('pauseHomeBtn');
+            
+            if (resumeBtn) {
+                resumeBtn.addEventListener('click', function() {
+                    if (typeof resumeGame === 'function') {
+                        resumeGame();
+                    }
+                    hideGameSettings();
+                });
+            }
+            
+            if (pauseRestartBtn) {
+                pauseRestartBtn.addEventListener('click', function() {
+                    if (typeof restartFromPause === 'function') {
+                        restartFromPause();
+                    }
+                    showGameSettings();
+                    setTimeout(hideGameSettings, 100);
+                });
+            }
+            
+            if (pauseHomeBtn) {
+                pauseHomeBtn.addEventListener('click', function() {
+                    window.location.href = 'index.html';
+                });
+            }
+            
             // Fix touch events on tracks for better response
             setTimeout(() => {
                 const tracks = document.querySelectorAll('.track');
-                tracks.forEach(track => {
+                tracks.forEach((track, idx) => {
+                    track.setAttribute('data-track-index', idx);
                     track.addEventListener('touchstart', (e) => {
                         e.preventDefault();
                         const index = parseInt(track.dataset.trackIndex);
@@ -606,7 +754,16 @@
                 });
             }, 100);
             
-            console.log('Mobile game initialized with Piano Tiles style');
+            // Override showResult to show settings again
+            const originalShowResult = window.showResult;
+            if (originalShowResult) {
+                window.showResult = function() {
+                    showGameSettings();
+                    return originalShowResult();
+                };
+            }
+            
+            console.log('Mobile game initialized - Settings hide on game start');
         })();
     </script>
 </body>
