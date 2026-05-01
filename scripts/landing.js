@@ -284,47 +284,51 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// GOOGLE SIGN-IN FUNCTION - FIXED
+// GOOGLE SIGN-IN FUNCTION - COMPLETE FIX
 // ============================================
 
 function handleGoogleSignIn() {
     console.log('Google Sign-In triggered');
     
-    // Direct popup call - must be synchronous
     signInWithPopup(auth, googleProvider)
-        .then(async (result) => {
+        .then((result) => {
             const user = result.user;
             console.log('Google sign-in successful:', user.email);
             
-            try {
-                // Check if user document exists using firestore
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                
-                if (!userDoc.exists()) {
-                    await setDoc(userDocRef, {
-                        email: user.email,
-                        highScore: 0,
-                        createdAt: new Date().toISOString()
-                    });
-                    console.log('Created user document for:', user.email);
-                }
-            } catch (firestoreError) {
-                console.error('Firestore error:', firestoreError);
-                // Continue even if Firestore fails - auth still works
+            // Close modal IMMEDIATELY - don't wait for Firestore
+            const authModal = document.getElementById('authModal');
+            if (authModal) {
+                authModal.classList.remove('active');
             }
             
-            // Close modal
-            const authModal = document.getElementById('authModal');
-            if (authModal) authModal.classList.remove('active');
+            // Update UI immediately
+            updateUIForUser(user);
             
-            // Refresh leaderboard
-            setTimeout(() => loadRealLeaderboard(), 500);
+            // Handle Firestore in background (don't block the modal close)
+            const userDocRef = doc(db, 'users', user.uid);
+            getDoc(userDocRef)
+                .then((userDoc) => {
+                    if (!userDoc.exists()) {
+                        return setDoc(userDocRef, {
+                            email: user.email,
+                            highScore: 0,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                })
+                .then(() => {
+                    console.log('User document saved');
+                    setTimeout(() => loadRealLeaderboard(), 1000);
+                })
+                .catch((err) => {
+                    console.error('Firestore error:', err);
+                    // Don't show error to user - auth still works
+                });
         })
         .catch((error) => {
             console.error('Google sign-in error:', error);
             if (error.code === 'auth/popup-blocked') {
-                alert('Popup was blocked! Please allow popups for this site and click the Google button again.');
+                alert('Popup was blocked! Please allow popups for this site and try again.');
             }
             const errorDiv = document.getElementById('loginError');
             if (errorDiv) {
@@ -492,7 +496,11 @@ function setupAuthModal() {
     // Google Sign-In button - DIRECT HANDLER
     if (googleSignInBtn) {
         console.log('Google button found, attaching direct listener');
-        googleSignInBtn.addEventListener('click', (e) => {
+        // Remove any existing listeners by cloning
+        const newGoogleBtn = googleSignInBtn.cloneNode(true);
+        googleSignInBtn.parentNode.replaceChild(newGoogleBtn, googleSignInBtn);
+        
+        newGoogleBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             handleGoogleSignIn();
@@ -503,7 +511,9 @@ function setupAuthModal() {
             const btn = document.getElementById('googleSignInBtn');
             if (btn) {
                 console.log('Google button found on retry');
-                btn.addEventListener('click', (e) => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleGoogleSignIn();
