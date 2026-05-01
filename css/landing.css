@@ -32,6 +32,43 @@ body {
     min-height: 100vh;
 }
 
+/* Google Sign-In Button */
+.auth-google {
+    background: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    margin-bottom: 15px;
+}
+
+.auth-google:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.auth-divider {
+    text-align: center;
+    margin: 15px 0;
+    position: relative;
+}
+
+.auth-divider span {
+    background: #1a1a2e;
+    padding: 0 10px;
+    color: #888;
+    font-size: 0.85rem;
+}
+
 
 /* ============================================
    USER BAR STYLES (Top Bar for Logged In Users)

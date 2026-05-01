@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, addDoc, collection } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
@@ -17,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 let currentUser = null;
 let gameScoreSaved = false;
@@ -48,6 +49,31 @@ function hideAuthModal() {
     if (loginForm) loginForm.reset();
     if (signupForm) signupForm.reset();
 }
+
+// Google Sign-In
+window.signInWithGoogle = async function() {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        // Check if user document exists, if not create one
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                highScore: 0,
+                createdAt: new Date().toISOString()
+            });
+        }
+        
+        hideAuthModal();
+        console.log('Google sign-in successful:', user.email);
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) errorDiv.textContent = 'Google sign-in failed: ' + error.message;
+    }
+};
 
 // Tab switching
 if (authTabs.length) {
