@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
 import { getFirestore, collection, query, orderBy, limit, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
@@ -17,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 // DOM Elements
 const particlesContainer = document.getElementById('particles');
@@ -152,7 +153,6 @@ function setupDemoTaps(previewState) {
 function displayDemoLeaderboard() {
     if (!leaderboardBody) return;
     
-    // Sample demo data for when Firebase fails
     const demoScores = [
         { name: "RhythmMaster", score: 84520 },
         { name: "BeatWizard", score: 67230 },
@@ -185,11 +185,10 @@ function displayDemoLeaderboard() {
 }
 
 // ============================================
-// LEADERBOARD FROM FIREBASE (SINGLE ATTEMPT)
+// LEADERBOARD FROM FIREBASE
 // ============================================
 
 async function loadRealLeaderboard() {
-    // Prevent multiple simultaneous loads
     if (isLoadingLeaderboard) {
         console.log('Leaderboard already loading, skipping...');
         return;
@@ -204,21 +203,16 @@ async function loadRealLeaderboard() {
     console.log('Loading leaderboard at:', new Date().toLocaleTimeString());
     
     try {
-        // First, check if Firebase is accessible
         const leaderboardRef = collection(db, 'leaderboard');
-        
-        // Simple query without orderBy first to test connection
         const testSnapshot = await getDocs(leaderboardRef);
         console.log('Leaderboard connection successful, total entries:', testSnapshot.size);
         
-        // Now try with ordering
         const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         
         console.log('Ordered query successful, entries:', querySnapshot.size);
         
         if (querySnapshot.empty) {
-            // No real data, show demo with message
             leaderboardBody.innerHTML = `
                 <div class="leaderboard-entry">
                     <span colspan="3" style="text-align: center; color: #ffaa44;">🎵 No scores yet! Be the first to play! 🎵</span>
@@ -253,15 +247,12 @@ async function loadRealLeaderboard() {
         
         leaderboardBody.innerHTML = leaderboardHTML;
         console.log('Leaderboard displayed successfully with real data');
-        leaderboardRetryCount = 0; // Reset retry count on success
+        leaderboardRetryCount = 0;
         
     } catch (error) {
         console.error('Leaderboard error:', error.code, error.message);
-        
-        // Display demo data instead of error message
         displayDemoLeaderboard();
         
-        // Add a small note that this is demo data
         const note = document.createElement('div');
         note.className = 'leaderboard-entry';
         note.style.textAlign = 'center';
@@ -273,7 +264,6 @@ async function loadRealLeaderboard() {
         
         leaderboardRetryCount++;
         
-        // If failed multiple times, stop trying so frequently
         if (leaderboardRetryCount >= 3) {
             console.log('Leaderboard failed multiple times, reducing retry frequency');
             if (leaderboardInterval) {
@@ -282,7 +272,7 @@ async function loadRealLeaderboard() {
                     if (!isLoadingLeaderboard && leaderboardRetryCount < 10) {
                         loadRealLeaderboard();
                     }
-                }, 120000); // Try every 2 minutes instead
+                }, 120000);
             }
         }
     } finally {
@@ -295,6 +285,35 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================
+// GOOGLE SIGN-IN FOR LANDING PAGE
+// ============================================
+
+window.signInWithGoogle = async function() {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                highScore: 0,
+                createdAt: new Date().toISOString()
+            });
+        }
+        
+        const authModal = document.getElementById('authModal');
+        if (authModal) authModal.classList.remove('active');
+        console.log('Google sign-in successful:', user.email);
+        setTimeout(() => loadRealLeaderboard(), 500);
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) errorDiv.textContent = 'Google sign-in failed: ' + error.message;
+    }
+};
 
 // ============================================
 // MOBILE MENU
@@ -408,6 +427,7 @@ function setupAuthModal() {
     const authForms = document.querySelectorAll('.auth-form');
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
 
     function hideAuthModal() {
         if (authModal) authModal.classList.remove('active');
@@ -435,6 +455,11 @@ function setupAuthModal() {
         authModal.addEventListener('click', (e) => {
             if (e.target === authModal) hideAuthModal();
         });
+    }
+
+    // Google Sign-In button
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', window.signInWithGoogle);
     }
 
     if (authTabs.length) {
@@ -523,7 +548,6 @@ if (logoutBtnTop) {
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     updateUIForUser(user);
-    // Small delay to ensure DOM is ready
     setTimeout(() => loadRealLeaderboard(), 500);
 });
 
@@ -542,23 +566,18 @@ async function init() {
     setupScrollReveal();
     setupAuthModal();
     
-    // Show demo leaderboard immediately while loading
     displayDemoLeaderboard();
-    
-    // Try to load real leaderboard after a delay
     setTimeout(() => loadRealLeaderboard(), 1000);
     
-    // Refresh leaderboard less frequently
     leaderboardInterval = setInterval(() => {
         if (!isLoadingLeaderboard) {
             loadRealLeaderboard();
         }
-    }, 90000); // Every 90 seconds
+    }, 90000);
     
-    console.log('Landing Page initialized! 🎵');
+    console.log('Landing Page initialized with Google Sign-In! 🎵');
 }
 
-// Start initialization when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {

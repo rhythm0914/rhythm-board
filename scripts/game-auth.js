@@ -151,6 +151,21 @@ if (guestGameBtn) {
     });
 }
 
+// Google Sign-In button listener (dynamic check since button might load later)
+const checkForGoogleButton = setInterval(() => {
+    const googleBtn = document.getElementById('googleSignInBtn');
+    if (googleBtn && !googleBtn.hasListener) {
+        googleBtn.hasListener = true;
+        googleBtn.addEventListener('click', window.signInWithGoogle);
+        console.log('Google Sign-In button attached');
+    }
+}, 500);
+
+// Clear interval after auth is initialized
+setTimeout(() => {
+    clearInterval(checkForGoogleButton);
+}, 10000);
+
 if (showAuthBtn) {
     showAuthBtn.addEventListener('click', showAuthModal);
 }
