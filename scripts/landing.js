@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
 import { getFirestore, collection, query, orderBy, limit, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
@@ -25,6 +25,11 @@ const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const navLinks = document.querySelector('.nav-links');
 const tapDemoBtns = document.querySelectorAll('.tap-demo-btn');
 const leaderboardBody = document.getElementById('leaderboardBody');
+const userBarTop = document.getElementById('userBarTop');
+const userEmailTop = document.getElementById('userEmailTop');
+const logoutBtnTop = document.getElementById('logoutBtnTop');
+
+let currentUser = null;
 
 // ============================================
 // CREATE FLOATING PARTICLES
@@ -72,7 +77,6 @@ function initPreviewCanvas() {
         
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         
-        // Draw lanes
         for (let i = 0; i < 7; i++) {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.strokeRect(i * laneWidth, 0, laneWidth, previewCanvas.height);
@@ -88,7 +92,6 @@ function initPreviewCanvas() {
             ctx.fillText(laneLabels[i], i * laneWidth + laneWidth / 2, previewCanvas.height - 15);
         }
         
-        // Draw moving beat line
         beat = (beat + 0.05) % 4;
         const lineY = previewCanvas.height - 80 - beat * 20;
         ctx.beginPath();
@@ -98,7 +101,6 @@ function initPreviewCanvas() {
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // Draw hit zone
         ctx.fillStyle = 'rgba(210, 145, 223, 0.15)';
         ctx.fillRect(0, previewCanvas.height - 80, previewCanvas.width, 60);
         
@@ -140,7 +142,7 @@ function setupDemoTaps(previewState) {
 }
 
 // ============================================
-// REAL LEADERBOARD FROM FIREBASE
+// LEADERBOARD FROM FIREBASE (REAL SCORES)
 // ============================================
 
 async function loadRealLeaderboard() {
@@ -207,7 +209,7 @@ async function loadRealLeaderboard() {
         console.error('Error loading leaderboard:', error);
         leaderboardBody.innerHTML = `
             <div class="leaderboard-entry">
-                <span colspan="3" style="text-align: center; color: #ff4444;">Unable to load leaderboard.</span>
+                <span colspan="3" style="text-align: center; color: #ff4444;">Unable to load leaderboard. Please try again later.</span>
             </div>
         `;
     }
@@ -277,7 +279,6 @@ function setupSmoothScroll() {
             const target = document.querySelector(targetId);
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                // Close mobile menu if open
                 if (navLinks && navLinks.classList.contains('active')) {
                     navLinks.classList.remove('active');
                     const spans = mobileMenuBtn?.querySelectorAll('span');
@@ -293,12 +294,39 @@ function setupSmoothScroll() {
 }
 
 // ============================================
+// UPDATE UI BASED ON AUTH STATE
+// ============================================
+
+function updateUIForUser(user) {
+    if (user) {
+        if (userBarTop) {
+            userBarTop.style.display = 'flex';
+            if (userEmailTop) userEmailTop.textContent = user.email.split('@')[0];
+        }
+        const leaderboardCTA = document.getElementById('leaderboardCTA');
+        if (leaderboardCTA) {
+            leaderboardCTA.innerHTML = '<p>✅ <strong>You are signed in!</strong> Your scores will be saved to the leaderboard. <a href="game.html">Play now</a> to set a high score!</p>';
+        }
+        const showAuthBtn = document.getElementById('showAuthBtnLanding');
+        if (showAuthBtn) showAuthBtn.style.display = 'none';
+    } else {
+        if (userBarTop) userBarTop.style.display = 'none';
+        const leaderboardCTA = document.getElementById('leaderboardCTA');
+        if (leaderboardCTA) {
+            leaderboardCTA.innerHTML = '<p>⭐ <strong>Sign in to save your scores</strong> and compete on the leaderboard! Guest players can still enjoy the full game, but scores won\'t be saved.</p>';
+        }
+        const showAuthBtn = document.getElementById('showAuthBtnLanding');
+        if (showAuthBtn) showAuthBtn.style.display = 'inline-block';
+    }
+}
+
+// ============================================
 // AUTH MODAL SETUP
 // ============================================
 
 function setupAuthModal() {
     const authModal = document.getElementById('authModal');
-    const showAuthBtn = document.getElementById('showAuthBtn');
+    const showAuthBtn = document.getElementById('showAuthBtnLanding');
     const authModalClose = document.getElementById('authModalClose');
     const guestBtn = document.getElementById('guestBtn');
     const authTabs = document.querySelectorAll('.auth-tab');
@@ -314,24 +342,20 @@ function setupAuthModal() {
         if (authModal) authModal.classList.add('active');
     }
 
-    // Show auth modal
     if (showAuthBtn) {
         showAuthBtn.addEventListener('click', showAuthModalFunc);
     }
 
-    // Close modal
     if (authModalClose) {
         authModalClose.addEventListener('click', hideAuthModal);
     }
 
-    // Close on outside click
     if (authModal) {
         authModal.addEventListener('click', (e) => {
             if (e.target === authModal) hideAuthModal();
         });
     }
 
-    // Tab switching
     if (authTabs.length) {
         authTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -345,7 +369,6 @@ function setupAuthModal() {
         });
     }
 
-    // Login handler
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -364,7 +387,6 @@ function setupAuthModal() {
         });
     }
 
-    // Signup handler
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -393,7 +415,6 @@ function setupAuthModal() {
         });
     }
 
-    // GUEST BUTTON - Redirect to game.html
     if (guestBtn) {
         guestBtn.addEventListener('click', () => {
             hideAuthModal();
@@ -401,6 +422,28 @@ function setupAuthModal() {
         });
     }
 }
+
+// ============================================
+// LOGOUT HANDLER
+// ============================================
+
+if (logoutBtnTop) {
+    logoutBtnTop.addEventListener('click', async () => {
+        await signOut(auth);
+        await loadRealLeaderboard();
+        updateUIForUser(null);
+    });
+}
+
+// ============================================
+// AUTH STATE LISTENER
+// ============================================
+
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    updateUIForUser(user);
+    await loadRealLeaderboard();
+});
 
 // ============================================
 // INITIALIZE
@@ -415,17 +458,15 @@ async function init() {
     setupMobileMenu();
     setupSmoothScroll();
     setupScrollReveal();
-    setupAuthModal();  // ADD THIS LINE
+    setupAuthModal();
     
     await loadRealLeaderboard();
     
-    // Refresh leaderboard every 30 seconds
     setInterval(loadRealLeaderboard, 30000);
     
     console.log('Landing Page initialized! 🎵');
 }
 
-// Start when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
