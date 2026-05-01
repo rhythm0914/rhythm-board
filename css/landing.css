@@ -9,8 +9,6 @@
     --color-purple-light: #d291df;
     --color-mint: #a2dcda;
     --color-white: #ffffff;
-    --primary-blue: #4361ee;
-    --primary-red: #e63946;
     --transition-fast: 0.3s ease;
     --transition-slow: 0.6s ease;
 }
@@ -164,25 +162,6 @@ body {
 
 .play-btn-nav:hover::after {
     width: 0;
-}
-
-/* Sign In Button in Navigation */
-.btn-auth {
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
-    border: none;
-    padding: 10px 28px;
-    border-radius: 50px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-    display: inline-block;
-}
-
-.btn-auth:hover {
-    transform: scale(1.05);
-    box-shadow: 0 5px 20px rgba(67, 97, 238, 0.4);
 }
 
 .mobile-menu-btn {
@@ -544,33 +523,6 @@ body {
     opacity: 0.7;
 }
 
-/* Responsive leaderboard */
-@media (max-width: 600px) {
-    .leaderboard-header {
-        grid-template-columns: 50px 1fr 70px 60px;
-        font-size: 0.75rem;
-        padding: 10px 12px;
-    }
-    
-    .leaderboard-entry {
-        grid-template-columns: 50px 1fr 70px 60px;
-        padding: 8px 12px;
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 450px) {
-    .leaderboard-header {
-        grid-template-columns: 40px 1fr 60px 50px;
-        font-size: 0.7rem;
-    }
-    
-    .leaderboard-entry {
-        grid-template-columns: 40px 1fr 60px 50px;
-        font-size: 0.7rem;
-    }
-}
-
 /* ============================================
    CALL TO ACTION SECTION
    ============================================ */
@@ -718,11 +670,6 @@ body {
     border: none;
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.9);
-    color: #333;
-}
-
-.auth-form input::placeholder {
-    color: #999;
 }
 
 .auth-submit {
@@ -852,25 +799,6 @@ body {
 .feature-card.revealed, .step.revealed, .leaderboard-card.revealed {
     opacity: 1;
     transform: translateY(0);
-}
-
-/* Score saved message animation */
-@keyframes fadeUp {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    20% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-25px);
-    }
 }
 
 /* ============================================
