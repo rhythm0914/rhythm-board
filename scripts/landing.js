@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
-import { getFirestore, collection, query, orderBy, limit, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getFirestore, collection, query, orderBy, limit, getDocs, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -284,45 +284,54 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// GOOGLE SIGN-IN FOR LANDING PAGE - FIXED
+// GOOGLE SIGN-IN FUNCTION - FIXED
 // ============================================
 
-async function signInWithGoogle() {
-    try {
-        console.log('Starting Google Sign-In...');
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        console.log('Google sign-in successful:', user.email);
-        
-        // Check if user document exists, if not create one
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists()) {
-            await setDoc(doc(db, 'users', user.uid), {
-                email: user.email,
-                highScore: 0,
-                createdAt: new Date().toISOString()
-            });
-            console.log('Created user document for:', user.email);
-        }
-        
-        // Close modal
-        const authModal = document.getElementById('authModal');
-        if (authModal) authModal.classList.remove('active');
-        
-        // Refresh leaderboard
-        setTimeout(() => loadRealLeaderboard(), 500);
-        
-    } catch (error) {
-        console.error('Google sign-in error:', error);
-        const errorDiv = document.getElementById('loginError');
-        if (errorDiv) {
-            errorDiv.textContent = 'Google sign-in failed: ' + error.message;
-        }
-    }
+function handleGoogleSignIn() {
+    console.log('Google Sign-In triggered');
+    
+    // Direct popup call - must be synchronous
+    signInWithPopup(auth, googleProvider)
+        .then(async (result) => {
+            const user = result.user;
+            console.log('Google sign-in successful:', user.email);
+            
+            try {
+                // Check if user document exists using firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                
+                if (!userDoc.exists()) {
+                    await setDoc(userDocRef, {
+                        email: user.email,
+                        highScore: 0,
+                        createdAt: new Date().toISOString()
+                    });
+                    console.log('Created user document for:', user.email);
+                }
+            } catch (firestoreError) {
+                console.error('Firestore error:', firestoreError);
+                // Continue even if Firestore fails - auth still works
+            }
+            
+            // Close modal
+            const authModal = document.getElementById('authModal');
+            if (authModal) authModal.classList.remove('active');
+            
+            // Refresh leaderboard
+            setTimeout(() => loadRealLeaderboard(), 500);
+        })
+        .catch((error) => {
+            console.error('Google sign-in error:', error);
+            if (error.code === 'auth/popup-blocked') {
+                alert('Popup was blocked! Please allow popups for this site and click the Google button again.');
+            }
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = 'Google sign-in failed: ' + error.message;
+            }
+        });
 }
-
-// Make it globally available
-window.signInWithGoogle = signInWithGoogle;
 
 // ============================================
 // MOBILE MENU
@@ -460,7 +469,6 @@ function setupAuthModal() {
 
     function showAuthModalFunc() {
         if (authModal) authModal.classList.add('active');
-        // Clear previous errors
         const loginError = document.getElementById('loginError');
         const signupError = document.getElementById('signupError');
         if (loginError) loginError.textContent = '';
@@ -481,23 +489,24 @@ function setupAuthModal() {
         });
     }
 
-    // Google Sign-In button
+    // Google Sign-In button - DIRECT HANDLER
     if (googleSignInBtn) {
-        console.log('Google button found, attaching listener');
+        console.log('Google button found, attaching direct listener');
         googleSignInBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            signInWithGoogle();
+            e.stopPropagation();
+            handleGoogleSignIn();
         });
     } else {
         console.log('Google button not found yet, will retry');
-        // Retry finding the button
         const retryInterval = setInterval(() => {
             const btn = document.getElementById('googleSignInBtn');
             if (btn) {
                 console.log('Google button found on retry');
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    signInWithGoogle();
+                    e.stopPropagation();
+                    handleGoogleSignIn();
                 });
                 clearInterval(retryInterval);
             }
