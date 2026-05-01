@@ -32,6 +32,8 @@ const logoutBtnTop = document.getElementById('logoutBtnTop');
 let currentUser = null;
 let leaderboardLoadTimeout = null;
 let isLoadingLeaderboard = false;
+let leaderboardRetryCount = 0;
+let leaderboardInterval = null;
 
 // ============================================
 // CREATE FLOATING PARTICLES
@@ -144,7 +146,46 @@ function setupDemoTaps(previewState) {
 }
 
 // ============================================
-// LEADERBOARD FROM FIREBASE (FIXED)
+// DISPLAY DEMO/PLACEHOLDER LEADERBOARD
+// ============================================
+
+function displayDemoLeaderboard() {
+    if (!leaderboardBody) return;
+    
+    // Sample demo data for when Firebase fails
+    const demoScores = [
+        { name: "RhythmMaster", score: 84520 },
+        { name: "BeatWizard", score: 67230 },
+        { name: "TapLegend", score: 54100 },
+        { name: "MusicLover", score: 42350 },
+        { name: "RhythmKing", score: 38900 }
+    ];
+    
+    let leaderboardHTML = '';
+    let rank = 1;
+    
+    demoScores.forEach(score => {
+        let rankDisplay = `#${rank}`;
+        if (rank === 1) rankDisplay = '🏆 #1';
+        if (rank === 2) rankDisplay = '🥈 #2';
+        if (rank === 3) rankDisplay = '🥉 #3';
+        
+        leaderboardHTML += `
+            <div class="leaderboard-entry">
+                <span class="rank">${rankDisplay}</span>
+                <span>${rank === 1 ? '👑 ' : ''}${score.name}</span>
+                <span>${score.score.toLocaleString()}</span>
+            </div>
+        `;
+        rank++;
+    });
+    
+    leaderboardBody.innerHTML = leaderboardHTML;
+    console.log('Displayed demo leaderboard data');
+}
+
+// ============================================
+// LEADERBOARD FROM FIREBASE (SINGLE ATTEMPT)
 // ============================================
 
 async function loadRealLeaderboard() {
@@ -162,22 +203,25 @@ async function loadRealLeaderboard() {
     isLoadingLeaderboard = true;
     console.log('Loading leaderboard at:', new Date().toLocaleTimeString());
     
-    // Clear any existing timeout
-    if (leaderboardLoadTimeout) {
-        clearTimeout(leaderboardLoadTimeout);
-    }
-    
     try {
+        // First, check if Firebase is accessible
         const leaderboardRef = collection(db, 'leaderboard');
+        
+        // Simple query without orderBy first to test connection
+        const testSnapshot = await getDocs(leaderboardRef);
+        console.log('Leaderboard connection successful, total entries:', testSnapshot.size);
+        
+        // Now try with ordering
         const q = query(leaderboardRef, orderBy('score', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         
-        console.log('Leaderboard query successful, entries:', querySnapshot.size);
+        console.log('Ordered query successful, entries:', querySnapshot.size);
         
         if (querySnapshot.empty) {
+            // No real data, show demo with message
             leaderboardBody.innerHTML = `
                 <div class="leaderboard-entry">
-                    <span colspan="3" style="text-align: center;">🎵 No scores yet! Be the first to play! 🎵</span>
+                    <span colspan="3" style="text-align: center; color: #ffaa44;">🎵 No scores yet! Be the first to play! 🎵</span>
                 </div>
             `;
             isLoadingLeaderboard = false;
@@ -208,39 +252,41 @@ async function loadRealLeaderboard() {
         });
         
         leaderboardBody.innerHTML = leaderboardHTML;
-        console.log('Leaderboard displayed successfully');
-        
-        // Update player count (don't let this fail the leaderboard)
-        try {
-            const playerCountSpan = document.getElementById('playerCount');
-            if (playerCountSpan) {
-                const usersRef = collection(db, 'users');
-                const usersSnapshot = await getDocs(usersRef);
-                const totalPlayers = usersSnapshot.size;
-                playerCountSpan.textContent = totalPlayers >= 1000 ? Math.floor(totalPlayers / 1000) + 'K+' : totalPlayers.toString();
-            }
-        } catch (userError) {
-            console.warn('Could not load player count:', userError);
-            const playerCountSpan = document.getElementById('playerCount');
-            if (playerCountSpan) playerCountSpan.textContent = '100+';
-        }
+        console.log('Leaderboard displayed successfully with real data');
+        leaderboardRetryCount = 0; // Reset retry count on success
         
     } catch (error) {
-        console.error('Leaderboard error:', error.message);
+        console.error('Leaderboard error:', error.code, error.message);
         
-        // Show user-friendly error but don't break the page
-        leaderboardBody.innerHTML = `
-            <div class="leaderboard-entry">
-                <span colspan="3" style="text-align: center; color: #ffaa44;">⚠️ Leaderboard temporarily unavailable. Please refresh the page.</span>
-            </div>
-        `;
+        // Display demo data instead of error message
+        displayDemoLeaderboard();
+        
+        // Add a small note that this is demo data
+        const note = document.createElement('div');
+        note.className = 'leaderboard-entry';
+        note.style.textAlign = 'center';
+        note.style.color = '#ffaa44';
+        note.style.fontSize = '0.8rem';
+        note.style.justifyContent = 'center';
+        note.innerHTML = '<span colspan="3">⚠️ Live leaderboard unavailable - showing demo scores. Sign in and play to post real scores!</span>';
+        leaderboardBody.appendChild(note);
+        
+        leaderboardRetryCount++;
+        
+        // If failed multiple times, stop trying so frequently
+        if (leaderboardRetryCount >= 3) {
+            console.log('Leaderboard failed multiple times, reducing retry frequency');
+            if (leaderboardInterval) {
+                clearInterval(leaderboardInterval);
+                leaderboardInterval = setInterval(() => {
+                    if (!isLoadingLeaderboard && leaderboardRetryCount < 10) {
+                        loadRealLeaderboard();
+                    }
+                }, 120000); // Try every 2 minutes instead
+            }
+        }
     } finally {
         isLoadingLeaderboard = false;
-        
-        // Set timeout to prevent rapid successive calls
-        leaderboardLoadTimeout = setTimeout(() => {
-            leaderboardLoadTimeout = null;
-        }, 2000);
     }
 }
 
@@ -415,7 +461,7 @@ function setupAuthModal() {
                 await signInWithEmailAndPassword(auth, email, password);
                 if (errorDiv) errorDiv.textContent = '';
                 hideAuthModal();
-                setTimeout(() => loadRealLeaderboard(), 500);
+                setTimeout(() => loadRealLeaderboard(), 1000);
             } catch (error) {
                 if (errorDiv) errorDiv.textContent = 'Login failed: ' + error.message;
             }
@@ -443,7 +489,7 @@ function setupAuthModal() {
                 });
                 if (errorDiv) errorDiv.textContent = '';
                 hideAuthModal();
-                setTimeout(() => loadRealLeaderboard(), 500);
+                setTimeout(() => loadRealLeaderboard(), 1000);
             } catch (error) {
                 if (errorDiv) errorDiv.textContent = 'Signup failed: ' + error.message;
             }
@@ -478,7 +524,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     updateUIForUser(user);
     // Small delay to ensure DOM is ready
-    setTimeout(() => loadRealLeaderboard(), 300);
+    setTimeout(() => loadRealLeaderboard(), 500);
 });
 
 // ============================================
@@ -496,15 +542,18 @@ async function init() {
     setupScrollReveal();
     setupAuthModal();
     
-    // Initial leaderboard load with delay
-    setTimeout(() => loadRealLeaderboard(), 500);
+    // Show demo leaderboard immediately while loading
+    displayDemoLeaderboard();
     
-    // Refresh leaderboard every 60 seconds (not 30 to avoid rate limits)
-    setInterval(() => {
+    // Try to load real leaderboard after a delay
+    setTimeout(() => loadRealLeaderboard(), 1000);
+    
+    // Refresh leaderboard less frequently
+    leaderboardInterval = setInterval(() => {
         if (!isLoadingLeaderboard) {
             loadRealLeaderboard();
         }
-    }, 60000);
+    }, 90000); // Every 90 seconds
     
     console.log('Landing Page initialized! 🎵');
 }
