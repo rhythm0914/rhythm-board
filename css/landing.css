@@ -85,8 +85,15 @@ body {
     transform: scale(1.02);
 }
 
+/* FIXED: Auth Button Styles */
 #showAuthBtnLanding {
     cursor: pointer;
+    display: inline-block;
+}
+
+/* Hide auth button when user is logged in */
+#showAuthBtnLanding.hidden {
+    display: none;
 }
 
 @media (max-width: 768px) {
@@ -468,6 +475,7 @@ body {
     color: var(--color-primary);
 }
 
+/* FIXED: Enhanced btn-secondary for auth button */
 .btn-secondary {
     background: transparent;
     color: var(--color-white);
@@ -478,12 +486,23 @@ body {
     font-size: 1.1rem;
     border: 2px solid var(--color-purple-light);
     transition: all var(--transition-fast);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-secondary:hover {
     background: var(--color-purple-light);
     color: var(--color-primary);
     transform: translateY(-3px);
+    border-color: transparent;
+}
+
+/* FIXED: Active/pressed state for auth button */
+.btn-secondary:active {
+    transform: translateY(0px);
 }
 
 .hero-visual {
@@ -758,7 +777,7 @@ body {
 }
 
 /* ============================================
-   AUTH MODAL
+   AUTH MODAL - FIXED
    ============================================ */
 
 .auth-modal {
@@ -768,9 +787,9 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    z-index: 1000;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1001;
     align-items: center;
     justify-content: center;
 }
@@ -780,23 +799,25 @@ body {
 }
 
 .auth-modal-content {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    border-radius: 20px;
-    padding: 30px;
-    max-width: 400px;
+    background: linear-gradient(145deg, #1a1a2e, #12122a);
+    border-radius: 28px;
+    padding: 32px;
+    max-width: 420px;
     width: 90%;
     position: relative;
     animation: modalSlideIn 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes modalSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-50px);
+        transform: translateY(-50px) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -804,53 +825,63 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .auth-modal-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    margin: 0;
+    background: linear-gradient(135deg, #fff, var(--color-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    padding: 0;
 }
 
 .auth-modal-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-muted);
     font-size: 2rem;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
+    line-height: 1;
 }
 
 .auth-modal-close:hover {
     transform: scale(1.1);
-    color: var(--color-accent);
+    color: #ff4757;
 }
 
 .auth-tabs {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
 .auth-tab {
     flex: 1;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
     border: none;
-    color: white;
+    color: var(--color-white);
     cursor: pointer;
-    border-radius: 10px;
-    transition: all var(--transition-fast);
+    border-radius: 14px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 .auth-tab.active {
-    background: var(--color-accent);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
     color: var(--color-primary);
+    box-shadow: 0 4px 15px rgba(0, 223, 255, 0.3);
 }
 
 .auth-form {
     display: none;
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
 }
 
 .auth-form.active {
@@ -858,54 +889,78 @@ body {
 }
 
 .auth-form input {
-    padding: 12px 15px;
-    border-radius: 10px;
-    border: none;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     font-size: 1rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(0, 223, 255, 0.2);
+}
+
+.auth-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .auth-submit {
-    padding: 12px;
-    background: var(--color-accent);
+    padding: 14px;
+    background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
     border: none;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 14px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
+    color: var(--color-primary);
+    font-size: 1rem;
+    letter-spacing: 1px;
 }
 
 .auth-submit:hover {
     transform: scale(1.02);
-    background: var(--color-purple-light);
+    filter: brightness(1.05);
+    box-shadow: 0 6px 20px rgba(0, 223, 255, 0.4);
 }
 
 .auth-error {
-    color: #ff6666;
-    font-size: 0.85rem;
+    color: #ff8888;
+    font-size: 0.8rem;
     text-align: center;
 }
 
 .auth-guest {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-guest p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
 }
 
 .guest-btn {
-    margin-top: 10px;
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
+    margin-top: 12px;
+    padding: 10px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 40px;
     color: white;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
+    font-weight: 500;
 }
 
 .guest-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
 }
 
 /* ============================================
@@ -1094,6 +1149,11 @@ body {
     .cta-section h2 {
         font-size: 1.8rem;
     }
+    
+    .btn-secondary {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1110,8 +1170,8 @@ body {
     }
     
     .btn-primary, .btn-secondary {
-        padding: 12px 25px;
-        font-size: 1rem;
+        padding: 12px 20px;
+        font-size: 0.9rem;
     }
     
     .tap-demo-btn {
@@ -1122,5 +1182,13 @@ body {
     
     .control-badge {
         font-size: 0.8rem;
+    }
+    
+    .auth-modal-content {
+        padding: 20px;
+    }
+    
+    .auth-modal-header h2 {
+        font-size: 1.3rem;
     }
 }
