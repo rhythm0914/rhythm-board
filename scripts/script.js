@@ -42,6 +42,7 @@ var pauseOverlay;
 // ========== TOUCH SUPPORT VARIABLES ==========
 var touchActive = false;
 var touchTimeout;
+var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // ========== INITIALIZATION ==========
 var initializeNotes = function () {
@@ -253,8 +254,9 @@ var setupNoteMiss = function () {
   });
 };
 
-// ========== KEYBOARD CONTROLS ==========
+// ========== KEYBOARD CONTROLS (Desktop) ==========
 var setupKeys = function () {
+  // Only setup keyboard listeners for non-mobile or when keyboard is needed
   document.addEventListener('keydown', function (event) {
     // ESC key for pause
     if (event.key === 'Escape' && isPlaying && !isPaused) {
@@ -263,11 +265,17 @@ var setupKeys = function () {
       return;
     }
     
+    // Prevent default for game keys to avoid page scrolling
+    var gameKeys = ['s', 'd', 'f', ' ', 'j', 'k', 'l', 'S', 'D', 'F', 'J', 'K', 'L', 'Space'];
+    if (gameKeys.includes(event.key) || event.key === ' ') {
+      event.preventDefault();
+    }
+    
     var keyIndex = getKeyIndex(event.key);
 
-    if (Object.keys(isHolding).indexOf(event.key) !== -1 && !isHolding[event.key]) {
-      event.preventDefault();
-      isHolding[event.key] = true;
+    if (Object.keys(isHolding).indexOf(event.key.toLowerCase()) !== -1 && !isHolding[event.key.toLowerCase()]) {
+      var lowerKey = event.key.toLowerCase();
+      isHolding[lowerKey] = true;
       
       // O2Jam style column highlight
       if (keyIndex !== -1) {
@@ -285,13 +293,21 @@ var setupKeys = function () {
   });
 
   document.addEventListener('keyup', function (event) {
-    if (Object.keys(isHolding).indexOf(event.key) !== -1) {
+    var lowerKey = event.key.toLowerCase();
+    if (Object.keys(isHolding).indexOf(lowerKey) !== -1) {
       event.preventDefault();
       var keyIndex = getKeyIndex(event.key);
-      isHolding[event.key] = false;
+      isHolding[lowerKey] = false;
       if (keypress && keypress[keyIndex]) {
         keypress[keyIndex].style.display = 'none';
       }
+    }
+  });
+  
+  // Prevent spacebar from scrolling on mobile browsers
+  window.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.key === 'Space' || e.code === 'Space') {
+      e.preventDefault();
     }
   });
 };
@@ -382,7 +398,7 @@ var setupPauseOverlay = function () {
   document.getElementById('pauseHomeBtn').addEventListener('click', homeFromPause);
 };
 
-// ========== TOUCH CONTROLS ==========
+// ========== TOUCH CONTROLS (Mobile Optimized) ==========
 var getKeyCharFromElement = function (key) {
   var text = key.querySelector('span')?.innerText?.toLowerCase();
   if (text === 's') return 's';
@@ -416,6 +432,11 @@ var simulateKeyPress = function (key, index) {
     if (isPlaying && !isPaused && tracks && tracks[index] && tracks[index].firstChild) {
       judge(index);
     }
+    
+    // Vibrate on hit for mobile (optional, works on most mobile browsers)
+    if (isMobile && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   }
 };
 
@@ -432,8 +453,10 @@ var setupTouchControls = function () {
   var keys = document.querySelectorAll('.key');
   
   keys.forEach(function (key, index) {
+    // Touch events for mobile
     key.addEventListener('touchstart', function (e) {
       e.preventDefault();
+      e.stopPropagation();
       var keyChar = getKeyCharFromElement(key);
       if (keyChar) {
         simulateKeyPress(keyChar, index);
@@ -443,6 +466,7 @@ var setupTouchControls = function () {
     
     key.addEventListener('touchend', function (e) {
       e.preventDefault();
+      e.stopPropagation();
       var keyChar = getKeyCharFromElement(key);
       if (keyChar) {
         simulateKeyRelease(keyChar, index);
@@ -456,7 +480,9 @@ var setupTouchControls = function () {
       }
     });
     
+    // Mouse events for desktop touch screens
     key.addEventListener('mousedown', function (e) {
+      e.preventDefault();
       var keyChar = getKeyCharFromElement(key);
       if (keyChar) {
         simulateKeyPress(keyChar, index);
@@ -465,6 +491,7 @@ var setupTouchControls = function () {
     });
     
     key.addEventListener('mouseup', function (e) {
+      e.preventDefault();
       var keyChar = getKeyCharFromElement(key);
       if (keyChar) {
         simulateKeyRelease(keyChar, index);
@@ -478,17 +505,28 @@ var setupTouchControls = function () {
       }
     });
   });
+  
+  // Prevent touch scrolling on the entire game area
+  var gameArea = document.querySelector('.game');
+  if (gameArea) {
+    gameArea.addEventListener('touchmove', function(e) {
+      if (e.target.closest('.key')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
 };
 
 // ========== HELPER FUNCTIONS ==========
 var getKeyIndex = function (key) {
-  if (key === 's') return 0;
-  if (key === 'd') return 1;
-  if (key === 'f') return 2;
-  if (key === ' ') return 3;
-  if (key === 'j') return 4;
-  if (key === 'k') return 5;
-  if (key === 'l') return 6;
+  var lowerKey = key.toLowerCase();
+  if (lowerKey === 's') return 0;
+  if (lowerKey === 'd') return 1;
+  if (lowerKey === 'f') return 2;
+  if (lowerKey === ' ' || lowerKey === 'space') return 3;
+  if (lowerKey === 'j') return 4;
+  if (lowerKey === 'k') return 5;
+  if (lowerKey === 'l') return 6;
   return -1;
 };
 
@@ -647,6 +685,14 @@ var startGame = function () {
     audioElement.currentTime = 0;
     audioElement.play().catch(function(e) {
       console.log('Audio play failed:', e);
+      // Try to play with user interaction on mobile
+      var playOnTouch = function() {
+        audioElement.play().catch(function() {});
+        document.removeEventListener('touchstart', playOnTouch);
+        document.removeEventListener('click', playOnTouch);
+      };
+      document.addEventListener('touchstart', playOnTouch);
+      document.addEventListener('click', playOnTouch);
     });
   }
   
@@ -746,7 +792,7 @@ var resetGame = function () {
     }
 };
 
-// ========== ACTION BUTTONS - SIMPLIFIED (Only Replay & Home) ==========
+// ========== ACTION BUTTONS ==========
 var setupActionButtons = function () {
     document.body.addEventListener('click', function(e) {
         var target = e.target;
@@ -761,7 +807,7 @@ var setupActionButtons = function () {
             window.location.href = 'index.html';
         }
         
-        // Replay button (replaces both restart and replay)
+        // Replay button
         if (btn.id === 'replayBtn' || btn.classList.contains('action-btn--replay')) {
             btn.classList.add('action-btn--processing');
             resetGame();
@@ -789,6 +835,26 @@ var preventZoomOnDoubleTap = function() {
   }, { passive: false });
 };
 
+// ========== SHOW ON-SCREEN KEYBOARD INFO FOR MOBILE ==========
+var showMobileInstructions = function() {
+  if (isMobile) {
+    var menuDiv = document.querySelector('.menu');
+    if (menuDiv && !document.querySelector('.mobile-instruction')) {
+      var instruction = document.createElement('div');
+      instruction.className = 'mobile-instruction';
+      instruction.innerHTML = `
+        <div style="background: rgba(0,0,0,0.6); border-radius: 12px; padding: 10px 15px; margin-top: 10px; font-size: 0.8rem;">
+          👆 Tap the colored buttons below to play! No keyboard needed on mobile.
+        </div>
+      `;
+      var startDiv = menuDiv.querySelector('.menu_start');
+      if (startDiv) {
+        startDiv.parentNode.insertBefore(instruction, startDiv.nextSibling);
+      }
+    }
+  }
+};
+
 // ========== WINDOW ONLOAD ==========
 window.onload = function () {
   trackContainer = document.querySelector('.track-container');
@@ -814,6 +880,14 @@ window.onload = function () {
   setupPauseOverlay();
   hideActionButtons();
   preventZoomOnDoubleTap();
+  showMobileInstructions();
   
-  console.log('Game initialized with Pause feature and O2Jam highlights!');
+  // Handle visibility change (tab switch) to pause game
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && isPlaying && !isPaused) {
+      pauseGame();
+    }
+  });
+  
+  console.log('Game initialized - Cross platform ready! Mobile:', isMobile);
 };
