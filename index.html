@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta name="description" content="Rhythm-Board - A precision rhythm tap game where timing is everything. Tap to the beat, build your combo, and master your rhythm skills.">
-    <meta name="keywords" content="rhythm game, tap game, music game, browser game, rhythm-board, O2Jam">
-    <meta name="author" content="Rhythm-Board Team">
-    <meta property="og:title" content="Rhythm-Board | Tap to the Beat">
-    <meta property="og:description" content="Test your timing in this addictive rhythm tap game. Play now for free!">
+    <meta name="description" content="Rhythm-Board - A precision rhythm tap game featuring Kataware Doki from Your Name. Test your timing, build combos, and compete on global leaderboards.">
+    <meta name="keywords" content="rhythm game, tap game, music game, browser game, rhythm-board, O2Jam, kataware doki, your name">
+    <meta name="author" content="Sedigo & Cañano">
+    <meta property="og:title" content="Rhythm-Board | Precision Rhythm Tap Game">
+    <meta property="og:description" content="Test your timing with Kataware Doki from Your Name. 7-key rhythm gameplay with global leaderboards!">
     <meta property="og:type" content="website">
-    <title>Rhythm-Board | Precision Rhythm Tap Game</title>
+    <meta property="og:image" content="https://rhythm0914.github.io/rhythm-board/img/screenshot.gif">
+    <title>Rhythm-Board | Kataware Doki Rhythm Game</title>
     
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <link rel="stylesheet" href="css/landing.css">
@@ -26,9 +27,10 @@
         </div>
         <div class="nav-links">
             <a href="#home">Home</a>
-            <a href="#features">Features</a>
+            <a href="#game-info">The Game</a>
             <a href="#howto">How to Play</a>
             <a href="#leaderboard">Leaderboard</a>
+            <a href="#team">Team</a>
             <a href="game.html" class="play-btn-nav">🎮 Play Now</a>
         </div>
         <div class="mobile-menu-btn" id="mobileMenuBtn">
@@ -41,34 +43,35 @@
     <section id="home" class="hero fade-in-up">
         <div class="hero-content">
             <div class="hero-badge">
-                ⚡ 7-KEY RHYTHM EXPERIENCE
+                🎵 KATAWARE DOKI - FROM "YOUR NAME" (君の名は)
             </div>
             <h1>
                 Tap. Feel.<br>
-                Master the Beat
+                Master the Rhythm
             </h1>
             <p>
-                Experience the ultimate 7-key rhythm tap game. Test your timing, 
-                build massive combos, and compete with players worldwide. 
-                Precision meets music in this addictive arcade experience.
+                Experience the beautiful piano synthesia version of Kataware Doki, 
+                composed by Yojiro Noda and arranged by Theishter. Test your timing 
+                across 7 lanes, build massive combos, and compete for the top spot 
+                on our global leaderboard.
             </p>
             <div class="hero-stats">
                 <div class="stat">
                     <div class="stat-number">7</div>
-                    <div class="stat-label">Keys</div>
+                    <div class="stat-label">Keys / Lanes</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-number">50ms</div>
-                    <div class="stat-label">Precision</div>
+                    <div class="stat-number">56</div>
+                    <div class="stat-label">Seconds Duration</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-number" id="playerCount">10K+</div>
-                    <div class="stat-label">Players</div>
+                    <div class="stat-number" id="playerCount">---</div>
+                    <div class="stat-label">Active Players</div>
                 </div>
             </div>
             <div class="cta-buttons">
-                <a href="game.html" class="btn-primary">🎯 Start Playing</a>
-                <a href="#features" class="btn-secondary">Learn More</a>
+                <a href="game.html" class="btn-primary">🎯 Launch Game</a>
+                <a href="#game-info" class="btn-secondary">Game Details</a>
             </div>
         </div>
         <div class="hero-visual">
@@ -87,82 +90,89 @@
         </div>
     </section>
 
-    <section id="features" class="features">
-        <h2 class="section-title">Why Play Rhythm-Board?</h2>
+    <section id="game-info" class="features">
+        <h2 class="section-title">About The Game</h2>
         <div class="features-grid">
             <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3>The Song</h3>
+                <p><strong>Kataware Doki (片割れ時)</strong> - The ethereal piano piece from Makoto Shinkai's acclaimed anime film "Your Name" (君の名は). Original composition by Yojiro Noda (RADWIMPS), piano arrangement by Theishter.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⌨️</div>
+                <h3>7-Key Gameplay</h3>
+                <p>Press <strong>S, D, F, Space, J, K, L</strong> in time with the falling notes. Each lane has colored notes that match the key colors for intuitive play.</p>
+            </div>
+            <div class="feature-card">
                 <div class="feature-icon">🎯</div>
-                <h3>Precision Timing</h3>
-                <p>Millisecond-accurate judgment system with Perfect, Good, Bad, and Miss ratings.</p>
+                <h3>Judgment System</h3>
+                <p>Four accuracy levels: <span style="color:#00ffc3">PERFECT</span> (≤0.1s), <span style="color:#39ff14">GOOD</span> (≤0.2s), <span style="color:#ffaa44">BAD</span> (≤0.25s), and <span style="color:#ff6b6b">MISS</span>. Precision is everything!</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔥</div>
-                <h3>Combo System</h3>
-                <p>Build massive combos and multiply your score. Every 40/80 hits increases multiplier!</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🏆</div>
-                <h3>Global Leaderboards</h3>
-                <p>Compete with players worldwide and climb the ranks to become the rhythm master.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <h3>Cross-Platform</h3>
-                <p>Play on desktop, tablet, or mobile. Keyboard and touch controls fully supported.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎵</div>
-                <h3>Your Name OST</h3>
-                <p>Kataware Doki piano synthesia version. Beautiful music from the anime classic.</p>
+                <h3>Combo Multiplier</h3>
+                <p>Build your combo chain! At 40 hits, score multiplier increases to 1.05x. At 80 hits, reach 1.10x multiplier. Break your combo and it resets to zero.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3>3 Speed Settings</h3>
-                <p>Adjust note speed from 1x to 3x. Challenge mode with fading notes available.</p>
+                <h3>Speed Settings</h3>
+                <p>Choose from 1x, 2x, or 3x note speed. Challenge Mode adds fading notes for extra difficulty. Press ESC to pause during gameplay.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Leaderboard System</h3>
+                <p>Create an account to save your scores to our Firebase leaderboard. Compete globally and track your personal best scores!</p>
             </div>
         </div>
     </section>
 
     <section id="howto" class="how-to-play">
         <div class="how-to-play-inner">
-            <h2 class="section-title">How to Play</h2>
+            <h2 class="section-title">How To Play — Rhythm Tap Mechanics</h2>
             <div class="steps">
                 <div class="step">
                     <div class="step-number">1</div>
-                    <h4>Press START</h4>
-                    <p>Click the Start button to begin your rhythm journey</p>
+                    <h4>Launch & Configure</h4>
+                    <p>Click "Start" on the game screen. Before playing, adjust Speed (1x/2x/3x) and optionally enable Challenge Mode (fading notes).</p>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
-                    <h4>Watch the Notes</h4>
-                    <p>Colored notes fall down 7 lanes (S, D, F, Space, J, K, L)</p>
+                    <h4>Watch the Note Highway</h4>
+                    <p>Colored notes fall vertically down 7 lanes. Each lane corresponds to a specific key: S (blue), D (red), F (blue), SPACE (orange), J (blue), K (red), L (blue).</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
-                    <h4>Tap Perfectly</h4>
-                    <p>Press the corresponding key when notes reach the hit zone</p>
+                    <h4>Time Your Input</h4>
+                    <p>Press the corresponding key exactly when the note reaches the hit zone at the bottom. The game judges your timing accuracy from PERFECT to MISS.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">4</div>
                     <h4>Build Your Combo</h4>
-                    <p>Chain perfect hits to maximize your score multiplier</p>
+                    <p>Chain consecutive GOOD or PERFECT hits to increase your combo counter. Higher combos multiply your score significantly!</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <h4>Complete the Song</h4>
+                    <p>The 56-second song plays automatically. Your final score is calculated based on accuracy, combo, and judgment counts. Save your high score by signing in!</p>
                 </div>
             </div>
             <div class="controls-info">
-                <div class="control-badge">🎮 Keys: S D F [SPACE] J K L</div>
-                <div class="control-badge">🎮 Touch: Tap the on-screen keys</div>
-                <div class="control-badge">🎮 Pause: Press ESC</div>
+                <div class="control-badge">⌨️ Left Hand: S | D | F</div>
+                <div class="control-badge">⌨️ Thumb: SPACE</div>
+                <div class="control-badge">⌨️ Right Hand: J | K | L</div>
+                <div class="control-badge">🎮 Touch: Tap on-screen keys</div>
+                <div class="control-badge">⏸️ Pause: ESC key</div>
             </div>
         </div>
     </section>
 
     <section id="leaderboard" class="leaderboard-preview">
-        <h2 class="section-title">Top Players</h2>
+        <h2 class="section-title">Global Leaderboard</h2>
         <div class="leaderboard-card">
             <div class="leaderboard-header">
                 <span>Rank</span>
                 <span>Player</span>
-                <span>Score</span>
+                <span>High Score</span>
             </div>
             <div class="leaderboard-body" id="leaderboardBody">
                 <div class="leaderboard-entry">
@@ -173,18 +183,49 @@
             </div>
         </div>
         <div class="leaderboard-cta">
-            <p>⭐ Sign in and play to see your name on the real leaderboard!</p>
+            <p>⭐ <strong>Sign up for an account</strong> to save your scores and compete on the leaderboard! Guest players can still enjoy the full game, but scores won't be saved.</p>
+        </div>
+    </section>
+
+    <section id="team" class="team-section">
+        <h2 class="section-title">Development Team</h2>
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-icon">👨‍💻</div>
+                <h3>Adiel Sedigo</h3>
+                <p class="team-role">Lead Developer & Game Logic</p>
+                <p class="team-desc">Responsible for core rhythm game mechanics, judgment system, combo scoring, note timing algorithms, and game loop implementation.</p>
+                <div class="team-links">
+                    <a href="https://github.com/sedigo" target="_blank" class="github-link">🐙 GitHub Profile</a>
+                </div>
+            </div>
+            <div class="team-card">
+                <div class="team-icon">🎨</div>
+                <h3>Ryan Cañano</h3>
+                <p class="team-role">UI/UX Designer & Frontend Developer</p>
+                <p class="team-desc">Responsible for website portal design, CSS styling, responsive layouts, leaderboard integration, and Firebase authentication setup.</p>
+                <div class="team-links">
+                    <a href="https://github.com/canano" target="_blank" class="github-link">🐙 GitHub Profile</a>
+                </div>
+            </div>
+        </div>
+        <div class="team-credits">
+            <h4>🎵 Music Credits</h4>
+            <p><strong>Original Composition:</strong> Yojiro Noda (RADWIMPS) — "Kataware Doki" from "Your Name" (君の名は)</p>
+            <p><strong>Piano Synthesia Arrangement:</strong> <a href="http://www.theishter.com/" target="_blank">Theishter</a></p>
+            <p><strong>Game Concept:</strong> Rhythm Tap genre inspired by O2Jam, Guitar Hero, and osu!</p>
         </div>
     </section>
 
     <section class="cta-section">
         <h2>Ready to Test Your Rhythm?</h2>
-        <p>Join thousands of players and discover your timing precision.</p>
+        <p>Join the leaderboard and prove you have the best timing!</p>
         <a href="game.html" class="btn-primary cta-button">🎮 Play Rhythm-Board Now</a>
         <div class="cta-features">
             <span>✓ Free to play</span>
             <span>✓ No download required</span>
             <span>✓ Works on all devices</span>
+            <span>✓ Save your high scores</span>
         </div>
     </section>
 
@@ -192,31 +233,31 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h4>Rhythm-Board</h4>
-                <p>Precision rhythm tap game<br>Master your timing</p>
+                <p>A precision rhythm tap game featuring<br>Kataware Doki from "Your Name" (君の名は).<br>Developed for UPHSD Molino - WST Final Project.</p>
             </div>
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <a href="#home">Home</a>
-                <a href="#features">Features</a>
+                <a href="#game-info">The Game</a>
                 <a href="#howto">How to Play</a>
                 <a href="#leaderboard">Leaderboard</a>
+                <a href="#team">Team</a>
             </div>
             <div class="footer-section">
-                <h4>Game Info</h4>
-                <a href="#">7-Key Rhythm</a>
-                <a href="#">Kataware Doki</a>
-                <a href="#">Speed Settings</a>
-                <a href="#">Challenge Mode</a>
+                <h4>Game Features</h4>
+                <a href="#">7-Key Rhythm Gameplay</a>
+                <a href="#">Kataware Doki (56 sec)</a>
+                <a href="#">Speed Settings (1x-3x)</a>
+                <a href="#">Challenge Fade Mode</a>
+                <a href="#">Score Leaderboard</a>
             </div>
             <div class="footer-section">
-                <h4>Legal</h4>
-                <a href="#">Terms of Service</a>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Cookie Policy</a>
+                <h4>Project Info</h4>
+                <p>UPHSD Molino<br>College of Computer Studies<br>Web Systems & Technologies<br>2-Week Sprint Project</p>
             </div>
         </div>
         <div class="copyright">
-            © 2024 Rhythm-Board. All rights reserved. Tap to the beat!
+            © 2024 Rhythm-Board | Developed by Sedigo & Cañano | Music: Kataware Doki - Yojiro Noda (RADWIMPS) | Piano ver: Theishter
         </div>
     </footer>
 </div>
@@ -245,7 +286,7 @@
             <p class="auth-error" id="signupError"></p>
         </form>
         <div class="auth-guest">
-            <p>or continue as guest</p>
+            <p>or continue as guest (scores won't be saved to leaderboard)</p>
             <button id="guestBtn" class="guest-btn">Play as Guest</button>
         </div>
     </div>

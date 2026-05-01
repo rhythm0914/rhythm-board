@@ -1,6 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js';
-import { getFirestore, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js';
+import { getFirestore, collection, query, orderBy, limit, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
 // DOM Elements
@@ -291,6 +293,116 @@ function setupSmoothScroll() {
 }
 
 // ============================================
+// AUTH MODAL SETUP
+// ============================================
+
+function setupAuthModal() {
+    const authModal = document.getElementById('authModal');
+    const showAuthBtn = document.getElementById('showAuthBtn');
+    const authModalClose = document.getElementById('authModalClose');
+    const guestBtn = document.getElementById('guestBtn');
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const authForms = document.querySelectorAll('.auth-form');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+
+    function hideAuthModal() {
+        if (authModal) authModal.classList.remove('active');
+    }
+
+    function showAuthModalFunc() {
+        if (authModal) authModal.classList.add('active');
+    }
+
+    // Show auth modal
+    if (showAuthBtn) {
+        showAuthBtn.addEventListener('click', showAuthModalFunc);
+    }
+
+    // Close modal
+    if (authModalClose) {
+        authModalClose.addEventListener('click', hideAuthModal);
+    }
+
+    // Close on outside click
+    if (authModal) {
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) hideAuthModal();
+        });
+    }
+
+    // Tab switching
+    if (authTabs.length) {
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                authTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                authForms.forEach(form => form.classList.remove('active'));
+                const targetForm = document.getElementById(`${tabName}Form`);
+                if (targetForm) targetForm.classList.add('active');
+            });
+        });
+    }
+
+    // Login handler
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                if (errorDiv) errorDiv.textContent = '';
+                hideAuthModal();
+                await loadRealLeaderboard();
+            } catch (error) {
+                if (errorDiv) errorDiv.textContent = 'Login failed: ' + error.message;
+            }
+        });
+    }
+
+    // Signup handler
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const errorDiv = document.getElementById('signupError');
+            
+            if (password.length < 6) {
+                if (errorDiv) errorDiv.textContent = 'Password must be at least 6 characters';
+                return;
+            }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, 'users', userCredential.user.uid), {
+                    email: email,
+                    highScore: 0,
+                    createdAt: new Date().toISOString()
+                });
+                if (errorDiv) errorDiv.textContent = '';
+                hideAuthModal();
+                await loadRealLeaderboard();
+            } catch (error) {
+                if (errorDiv) errorDiv.textContent = 'Signup failed: ' + error.message;
+            }
+        });
+    }
+
+    // GUEST BUTTON - Redirect to game.html
+    if (guestBtn) {
+        guestBtn.addEventListener('click', () => {
+            hideAuthModal();
+            window.location.href = 'game.html';
+        });
+    }
+}
+
+// ============================================
 // INITIALIZE
 // ============================================
 
@@ -303,6 +415,7 @@ async function init() {
     setupMobileMenu();
     setupSmoothScroll();
     setupScrollReveal();
+    setupAuthModal();  // ADD THIS LINE
     
     await loadRealLeaderboard();
     
