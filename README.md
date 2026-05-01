@@ -34,8 +34,8 @@ The game judges your timing accuracy against each note's perfect hit window:
 
 | Role | Developer | Responsibilities |
 |------|-----------|------------------|
-| **Lead Developer & Game Logic** | Ryan Cañano | Core rhythm game mechanics, judgment system, combo scoring, note timing algorithms, game loop implementation |
-| **UI/UX Designer & Frontend Developer** | Adiel Sedigo | Website portal design, CSS styling, responsive layouts, leaderboard integration, Firebase authentication |
+| **Lead Developer & Game Logic** | Ryan Cañano | Core rhythm game mechanics, judgment system, combo scoring, note timing algorithms, game loop implementation, Firebase authentication |
+| **UI/UX Designer & Frontend Developer** | Adiel Sedigo | Website portal design, CSS styling, responsive layouts, leaderboard integration. |
 
 ## 🎵 Music Credits
 
